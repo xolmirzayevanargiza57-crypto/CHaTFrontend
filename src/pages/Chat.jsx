@@ -69,6 +69,14 @@ const Chat = () => {
       setMessages((prev) => prev.filter(msg => !data.messageIds.includes(msg._id)));
     });
 
+    socket.on('friendRemoved', (data) => {
+      setFriends(prev => prev.filter(f => f._id !== data.friendId));
+      if (selectedFriend?._id === data.friendId) {
+        setSelectedFriend(null);
+        setMessages([]);
+      }
+    });
+
     socket.on('newFriend', (newFriend) => {
         setFriends(prev => [...prev, { ...newFriend, unreadCount: 1 }]);
     });
@@ -79,6 +87,7 @@ const Chat = () => {
       socket.off('receiveMessage');
       socket.off('chatCleared');
       socket.off('messagesDeleted');
+      socket.off('friendRemoved');
       socket.off('newFriend');
     };
   }, [user.id, selectedFriend, fetchFriends]);

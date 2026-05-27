@@ -92,60 +92,61 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         }
         .logo {
           font-weight: 800;
-          font-size: 1.5rem;
+          font-size: 1.6rem;
           color: var(--accent);
-          letter-spacing: -0.5px;
+          letter-spacing: -1px;
         }
         .icon-btn {
           background: var(--bg-primary);
           color: var(--text-primary);
-          border-radius: 0.75rem;
-          padding: 0.5rem;
+          border-radius: 12px;
+          padding: 0.6rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         .friends-list {
           flex: 1;
           overflow-y: auto;
-          padding: 0 0.5rem;
+          padding: 0.5rem;
         }
         .friend-item {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          padding: 1rem;
+          gap: 0.85rem;
+          padding: 0.85rem 1rem;
           margin: 0.25rem 0.5rem;
-          border-radius: 1rem;
+          border-radius: 16px;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .friend-item:hover {
-          background: rgba(59, 130, 246, 0.05);
+          background: rgba(128, 128, 128, 0.05);
         }
         .friend-item.active {
           background: var(--bg-primary);
-          box-shadow: var(--shadow);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
         .avatar {
-          width: 48px;
-          height: 48px;
-          background: var(--accent);
+          width: 50px;
+          height: 50px;
+          background: linear-gradient(135deg, var(--accent), #60a5fa);
           color: white;
-          border-radius: 1rem;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
           position: relative;
           flex-shrink: 0;
+          box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
         }
         .online-status {
-          width: 12px;
-          height: 12px;
-          background: #10b981;
-          border: 2px solid var(--bg-sidebar);
+          width: 14px;
+          height: 14px;
+          background: #34c759;
+          border: 2.5px solid var(--bg-sidebar);
           border-radius: 50%;
           position: absolute;
           bottom: -2px;
@@ -162,20 +163,21 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         }
         .friend-name {
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 1rem;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          color: var(--text-primary);
         }
         .friend-username {
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
         }
         .remove-friend-btn {
             background: transparent;
             color: var(--text-secondary);
-            padding: 0.4rem;
-            border-radius: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 10px;
             opacity: 0;
             transition: all 0.2s;
         }
@@ -183,19 +185,24 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
             opacity: 1;
         }
         .remove-friend-btn:hover {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.05);
+            color: #ff3b30;
+            background: rgba(255, 59, 48, 0.08);
         }
         .unread-badge {
             background: var(--accent);
             color: white;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            padding: 0.2rem 0.5rem;
-            border-radius: 1rem;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            padding: 0 6px;
         }
         .sidebar-footer {
-          padding: 1.25rem;
+          padding: 1rem 1.5rem;
           display: flex;
           justify-content: space-between;
           border-top: 1px solid var(--border);
@@ -204,16 +211,21 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         .nav-btn {
           background: transparent;
           color: var(--text-secondary);
-          padding: 0.5rem;
-          border-radius: 0.75rem;
-          transition: all 0.2s;
+          padding: 0.75rem;
+          border-radius: 14px;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .nav-btn:hover {
           color: var(--accent);
-          background: var(--bg-secondary);
+          background: rgba(59, 130, 246, 0.08);
+          transform: translateY(-2px);
         }
         .nav-btn.logout:hover {
-            color: #ef4444;
+            color: #ff3b30;
+            background: rgba(255, 59, 48, 0.08);
         }
 
         @media (max-width: 768px) {
@@ -223,6 +235,10 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
             left: 0;
             top: 0;
             display: ${selectedFriend ? 'none' : 'flex'};
+            padding-bottom: 65px;
+          }
+          .logo {
+            font-size: 1.8rem;
           }
         }
       `}</style>

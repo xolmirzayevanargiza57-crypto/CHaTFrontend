@@ -359,15 +359,37 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
 
         @media (max-width: 768px) {
           .back-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(128, 128, 128, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
           }
           .chat-window {
               display: ${friend ? 'flex' : 'none'};
-              position: absolute;
+              position: fixed;
               left: 0;
               top: 0;
               width: 100%;
-              z-index: 20;
+              height: 100%;
+              z-index: 2000;
+              background: var(--bg-primary);
+          }
+          .chat-header {
+            padding: 0.75rem 1rem;
+          }
+          .messages-area {
+            padding: 1rem;
+          }
+          .input-bar {
+            padding: 0.75rem 1rem;
+            padding-bottom: env(safe-area-inset-bottom, 0.75rem);
+          }
+          .send-btn {
+            width: 44px;
+            height: 44px;
           }
         }
       `}</style>

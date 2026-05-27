@@ -141,86 +141,109 @@ const SearchBar = ({ onFriendAdded }) => {
           right: 0.5rem;
           background: var(--bg-primary);
           border: 1px solid var(--border);
-          border-radius: 1rem;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          border-radius: 1.25rem;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
           z-index: 100;
-          max-height: 300px;
+          max-height: 400px;
           overflow-y: auto;
-          margin-top: 0.5rem;
+          margin-top: 0.75rem;
+          padding: 0.5rem 0;
         }
         .results-title {
-            padding: 0.75rem 1rem 0.25rem;
+            padding: 1rem 1.25rem 0.5rem;
             font-size: 0.75rem;
             font-weight: 700;
             color: var(--text-secondary);
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .search-user-card {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.75rem 1rem;
+          padding: 0.85rem 1.25rem;
           cursor: pointer;
+          transition: background 0.2s;
         }
         .search-user-card:hover {
-          background: var(--bg-secondary);
+          background: rgba(128, 128, 128, 0.05);
         }
         .user-info {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 1rem;
         }
         .avatar.small {
-          width: 32px;
-          height: 32px;
-          background: var(--accent);
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, var(--accent), #60a5fa);
           color: white;
-          border-radius: 50%;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
-          font-size: 0.8rem;
+          font-size: 0.9rem;
         }
         .name {
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 1rem;
+          color: var(--text-primary);
         }
         .username {
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: var(--text-secondary);
         }
         .add-btn {
-          background: var(--bg-secondary);
+          background: rgba(0, 122, 255, 0.1);
           color: var(--accent);
-          border-radius: 0.5rem;
-          padding: 0.5rem;
+          border-radius: 10px;
+          padding: 0.6rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
         }
         .add-btn:hover {
           background: var(--accent);
           color: white;
+          transform: scale(1.05);
         }
         .no-results {
-            padding: 1rem;
+            padding: 2rem 1rem;
             text-align: center;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         .add-by-username {
-          padding: 0 1rem 1rem;
+          padding: 0 1.25rem 1.5rem;
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
-          align-items: stretch;
+          gap: 1rem;
         }
         .add-by-username span {
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           color: var(--text-secondary);
           text-align: center;
+          line-height: 1.4;
         }
         .username-btn {
           width: 100%;
           justify-content: center;
+          gap: 0.5rem;
+          font-weight: 600;
+          padding: 1rem;
+          border-radius: 14px;
+        }
+
+        @media (max-width: 768px) {
+          .search-results {
+            left: 0;
+            right: 0;
+            width: 100%;
+            border-radius: 0 0 1.5rem 1.5rem;
+            margin-top: 0;
+          }
         }
       `}</style>
     </div>
