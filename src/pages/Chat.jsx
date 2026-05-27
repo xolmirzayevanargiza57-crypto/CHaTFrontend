@@ -26,7 +26,12 @@ const Chat = () => {
   useEffect(() => {
     fetchFriends();
     
-    socket = io('http://localhost:5000');
+    // Connect socket if not connected
+    if (!socket) {
+      const socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
+      socket = io(socketUrl);
+    }
+
     socket.emit('join', user.id);
 
     socket.on('userOnline', (userId) => {
@@ -38,14 +43,30 @@ const Chat = () => {
     });
 
     socket.on('receiveMessage', (message) => {
-      if (selectedFriend && (message.from === selectedFriend._id || message.to === selectedFriend._id)) {
-        setMessages((prev) => [...prev, message]);
-      } else {
-        // Increment unread count for the sender
-        setFriends(prev => prev.map(f => 
+      setMessages((prev) => {
+        // If this message belongs to the current open chat
+        if (selectedFriend && (message.from === selectedFriend._id || message.to === selectedFriend._id)) {
+          return [...prev, message];
+        }
+        return prev;
+      });
+
+      // If it's not the current friend, increment unread count
+      if (!selectedFriend || message.from !== selectedFriend._id) {
+         setFriends(prev => prev.map(f => 
           f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f
         ));
       }
+    });
+
+    socket.on('chatCleared', (data) => {
+      if (selectedFriend && data.from === selectedFriend._id) {
+        setMessages([]);
+      }
+    });
+
+    socket.on('messagesDeleted', (data) => {
+      setMessages((prev) => prev.filter(msg => !data.messageIds.includes(msg._id)));
     });
 
     socket.on('newFriend', (newFriend) => {
@@ -53,7 +74,12 @@ const Chat = () => {
     });
 
     return () => {
-      socket.disconnect();
+      socket.off('userOnline');
+      socket.off('userOffline');
+      socket.off('receiveMessage');
+      socket.off('chatCleared');
+      socket.off('messagesDeleted');
+      socket.off('newFriend');
     };
   }, [user.id, selectedFriend, fetchFriends]);
 
@@ -96,7 +122,12 @@ const Chat = () => {
 
   const handleDeleteMessages = async (messageIds) => {
     try {
-      await axios.delete('/api/messages/delete', { data: { messageIds } });
+      await axios.delete('/api/messages/delete', { 
+        data: { 
+          messageIds, 
+          toUserId: selectedFriend._id 
+        } 
+      });
       setMessages(prev => prev.filter(msg => !messageIds.includes(msg._id)));
     } catch (err) {
       console.error(err);

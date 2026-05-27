@@ -21,82 +21,102 @@ const Settings = () => {
       </div>
 
       <div className="settings-content">
-        <section>
+        <div className="settings-card glass">
           <div className="section-title">
-            <Globe size={18} />
+            <Globe className="icon-blue" size={20} />
             <span>{t.language}</span>
           </div>
-          <div className="language-options">
-            <button 
-              className={lang === 'uz' ? 'active' : ''} 
+          <div className="language-list">
+            <div 
+              className={`language-item ${lang === 'uz' ? 'active' : ''}`} 
               onClick={() => changeLang('uz')}
             >
-              O'zbekcha 🇺🇿
-            </button>
-            <button 
-              className={lang === 'ru' ? 'active' : ''} 
+              <span>O'zbekcha</span>
+              <img src="https://flagcdn.com/w20/uz.png" alt="uz" />
+            </div>
+            <div 
+              className={`language-item ${lang === 'ru' ? 'active' : ''}`} 
               onClick={() => changeLang('ru')}
             >
-              Русский 🇷🇺
-            </button>
-            <button 
-              className={lang === 'en' ? 'active' : ''} 
+              <span>Русский</span>
+              <img src="https://flagcdn.com/w20/ru.png" alt="ru" />
+            </div>
+            <div 
+              className={`language-item ${lang === 'en' ? 'active' : ''}`} 
               onClick={() => changeLang('en')}
             >
-              English 🇬🇧
-            </button>
-          </div>
-        </section>
-
-        <section>
-          <div className="section-title">
-            {theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
-            <span>{t.theme}</span>
-          </div>
-          <div className="theme-toggle-row" onClick={toggleTheme}>
-            <span>{theme === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
-            <div className={`toggle-switch ${theme === 'dark' ? 'on' : ''}`}>
-              <div className="toggle-handle"></div>
+              <span>English</span>
+              <img src="https://flagcdn.com/w20/gb.png" alt="en" />
             </div>
           </div>
-        </section>
+        </div>
+
+        <div className="settings-card glass">
+          <div className="section-title">
+            {theme === 'light' ? <Sun className="icon-yellow" size={20} /> : <Moon className="icon-purple" size={20} />}
+            <span>{t.theme}</span>
+          </div>
+          <div className="setting-row" onClick={toggleTheme}>
+            <span>{theme === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
+            <div className={`native-toggle ${theme === 'dark' ? 'on' : ''}`}>
+              <div className="toggle-thumb"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx="true">{`
         .settings-page {
-          max-width: 600px;
+          max-width: 500px;
           margin: 0 auto;
-          padding: 2rem 1rem;
+          padding: 1.5rem;
           height: 100vh;
           display: flex;
           flex-direction: column;
+          background: var(--bg-primary);
         }
         .settings-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 2rem;
+          gap: 1.25rem;
+          margin-bottom: 2.5rem;
+          padding-top: 1rem;
         }
         .settings-header h1 {
-          font-size: 1.5rem;
+          font-size: 1.75rem;
           font-weight: 700;
+          color: var(--text-primary);
         }
         .back-btn {
-          background: var(--bg-secondary);
+          background: rgba(128, 128, 128, 0.1);
           color: var(--text-primary);
-          padding: 0.5rem;
-          border-radius: 0.75rem;
+          width: 44px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 14px;
+          transition: all 0.2s;
+        }
+        .back-btn:hover {
+          background: rgba(128, 128, 128, 0.2);
+          transform: scale(0.95);
         }
         .settings-content {
           display: flex;
           flex-direction: column;
-          gap: 2rem;
+          gap: 1.5rem;
         }
-        section {
+        .settings-card {
+          padding: 1.25rem;
+          border-radius: 20px;
           background: var(--bg-secondary);
-          padding: 1.5rem;
-          border-radius: 1.25rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          border: 1px solid var(--border);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .glass {
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
         }
         .section-title {
           display: flex;
@@ -105,58 +125,81 @@ const Settings = () => {
           margin-bottom: 1.25rem;
           font-weight: 600;
           color: var(--text-secondary);
+          letter-spacing: -0.01em;
+          font-size: 0.95rem;
+          text-transform: uppercase;
         }
-        .language-options {
+        .language-list {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
         }
-        .language-options button {
-          text-align: left;
-          padding: 1rem;
-          border-radius: 0.75rem;
-          background: var(--bg-primary);
-          color: var(--text-primary);
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-        .language-options button.active {
-          background: var(--accent);
-          color: white;
-        }
-        .theme-toggle-row {
+        .language-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1rem;
-          background: var(--bg-primary);
-          border-radius: 0.75rem;
+          padding: 1rem 1.25rem;
+          border-radius: 14px;
+          background: rgba(128, 128, 128, 0.05);
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid transparent;
+        }
+        .language-item:hover {
+          background: rgba(128, 128, 128, 0.1);
+        }
+        .language-item.active {
+          background: var(--accent);
+          color: white;
+          box-shadow: 0 8px 16px rgba(0, 122, 255, 0.3);
+        }
+        .language-item span {
+          font-weight: 500;
+        }
+        .language-item img {
+          width: 24px;
+          height: auto;
+          border-radius: 4px;
+        }
+        .setting-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 0.25rem;
           cursor: pointer;
         }
-        .toggle-switch {
-          width: 48px;
-          height: 24px;
-          background: var(--border);
-          border-radius: 12px;
+        .setting-row span {
+          font-weight: 500;
+          color: var(--text-primary);
+        }
+        .native-toggle {
+          width: 52px;
+          height: 31px;
+          background: #e9e9ea;
+          border-radius: 100px;
           position: relative;
-          transition: background 0.3s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .toggle-switch.on {
-          background: var(--accent);
+        .native-toggle.on {
+          background: #34c759;
         }
-        .toggle-handle {
-          width: 20px;
-          height: 20px;
+        .toggle-thumb {
+          width: 27px;
+          height: 27px;
           background: white;
           border-radius: 50%;
           position: absolute;
           top: 2px;
           left: 2px;
-          transition: left 0.3s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         }
-        .toggle-switch.on .toggle-handle {
-          left: 26px;
+        .native-toggle.on .toggle-thumb {
+          left: 23px;
         }
+        .icon-blue { color: #007aff; }
+        .icon-yellow { color: #ffcc00; }
+        .icon-purple { color: #af52de; }
       `}</style>
     </div>
   );
