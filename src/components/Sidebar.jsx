@@ -3,10 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { translations } from '../i18n';
 import SearchBar from './SearchBar';
-import { Sun, Moon, MessageSquare, Settings, User, LogOut } from 'lucide-react';
+import { Sun, Moon, MessageSquare, Settings, User, LogOut, UserMinus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFriendAdded }) => {
+const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFriendAdded, onRemoveFriend }) => {
   const { user, logout, lang } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const t = translations[lang];
@@ -14,6 +14,13 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
 
   const getInitials = (firstName, lastName) => {
     return (firstName[0] + lastName[0]).toUpperCase();
+  };
+
+  const handleRemove = (e, friendId) => {
+    e.stopPropagation();
+    if (window.confirm(t.confirmRemoveFriend)) {
+      onRemoveFriend(friendId);
+    }
   };
 
   return (
@@ -45,6 +52,9 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
               </div>
               <span className="friend-username">@{friend.username}</span>
             </div>
+            <button className="remove-friend-btn" onClick={(e) => handleRemove(e, friend._id)} title={t.removeFriend}>
+              <UserMinus size={18} />
+            </button>
           </div>
         ))}
       </div>
@@ -160,6 +170,21 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         .friend-username {
           font-size: 0.8rem;
           color: var(--text-secondary);
+        }
+        .remove-friend-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 0.4rem;
+            border-radius: 0.5rem;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        .friend-item:hover .remove-friend-btn {
+            opacity: 1;
+        }
+        .remove-friend-btn:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
         }
         .unread-badge {
             background: var(--accent);

@@ -85,6 +85,37 @@ const Chat = () => {
     }
   };
 
+  const handleClearChat = async () => {
+    try {
+      await axios.delete(`/api/messages/clear/${selectedFriend._id}`);
+      setMessages([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteMessages = async (messageIds) => {
+    try {
+      await axios.delete('/api/messages/delete', { data: { messageIds } });
+      setMessages(prev => prev.filter(msg => !messageIds.includes(msg._id)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveFriend = async (friendId) => {
+    try {
+      await axios.delete(`/api/users/remove-friend/${friendId}`);
+      setFriends(prev => prev.filter(f => f._id !== friendId));
+      if (selectedFriend?._id === friendId) {
+        setSelectedFriend(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="chat-page">
       <Sidebar 
@@ -93,12 +124,15 @@ const Chat = () => {
         selectedFriend={selectedFriend}
         onSelectFriend={setSelectedFriend}
         onFriendAdded={fetchFriends}
+        onRemoveFriend={handleRemoveFriend}
       />
       <ChatWindow 
         friend={selectedFriend} 
         messages={messages}
         isOnline={selectedFriend && onlineUsers.includes(selectedFriend._id)}
         onSendMessage={handleSendMessage}
+        onClearChat={handleClearChat}
+        onDeleteMessages={handleDeleteMessages}
         onBack={() => setSelectedFriend(null)}
       />
 

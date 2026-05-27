@@ -29,7 +29,12 @@ export const translations = {
     noResults: "Natija topilmadi",
     addByUsername: "Username bo'yicha qo'shish",
     addByUsernameHelp: "Agar qidiruv natija bermasa, username bo'yicha do'st qo'shishingiz mumkin.",
-    chat: "Chat"
+    chat: "Chat",
+    clearChat: "Chatni tozalamoq",
+    deleteSelected: "Tanlanganlarni o'chirish",
+    removeFriend: "Do'stlikdan o'chirish",
+    confirmClear: "Haqiqatan ham ushbu chatni butunlay tozalamoqchimisiz?",
+    confirmRemoveFriend: "Haqiqatan ham ushbu do'stni o'chirib tashlamoqchimisiz?"
   },
   ru: {
     login: "Вход",
@@ -61,7 +66,12 @@ export const translations = {
     noResults: "Ничего не найдено",
     addByUsername: "Добавить по username",
     addByUsernameHelp: "Если результатов нет, добавьте друга по точному username.",
-    chat: "Чат"
+    chat: "Чат",
+    clearChat: "Очистить чат",
+    deleteSelected: "Удалить выбранные",
+    removeFriend: "Удалить из друзей",
+    confirmClear: "Вы уверены, что хотите полностью очистить этот чат?",
+    confirmRemoveFriend: "Вы уверены, что хотите удалить этого друга?"
   },
   en: {
     login: "Login",
@@ -93,6 +103,11 @@ export const translations = {
     noResults: "No results found",
     addByUsername: "Add by username",
     addByUsernameHelp: "If there are no results, add a friend by their exact username.",
-    chat: "Chat"
+    chat: "Chat",
+    clearChat: "Clear Chat",
+    deleteSelected: "Delete Selected",
+    removeFriend: "Remove Friend",
+    confirmClear: "Are you sure you want to completely clear this chat?",
+    confirmRemoveFriend: "Are you sure you want to remove this friend?"
   }
 };

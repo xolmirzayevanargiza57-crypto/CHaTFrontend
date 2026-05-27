@@ -3,8 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import { Send, ArrowLeft, MoreVertical } from 'lucide-react';
 
-const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
+const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMessages, onBack, isOnline }) => {
   const [text, setText] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState([]);
   const { user, lang } = useAuth();
   const t = translations[lang];
   const messagesEndRef = useRef(null);
@@ -17,12 +19,35 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    setSelectedMessages([]);
+    setShowMenu(false);
+  }, [friend]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim()) {
       onSendMessage(text);
       setText('');
     }
+  };
+
+  const toggleMessageSelection = (msgId) => {
+    setSelectedMessages(prev => 
+      prev.includes(msgId) ? prev.filter(id => id !== msgId) : [...prev, msgId]
+    );
+  };
+
+  const handleClear = () => {
+    if (window.confirm(t.confirmClear)) {
+      onClearChat();
+      setShowMenu(false);
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    onDeleteMessages(selectedMessages);
+    setSelectedMessages([]);
   };
 
   const getInitials = (firstName, lastName) => {
@@ -60,16 +85,24 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
             <p className="status">{isOnline ? t.online : t.offline}</p>
           </div>
         </div>
-        <button className="icon-btn">
-          <MoreVertical size={20} />
-        </button>
+        <div className="header-actions">
+          <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}>
+            <MoreVertical size={20} />
+          </button>
+          {showMenu && (
+            <div className="dropdown-menu">
+              <button onClick={handleClear}>{t.clearChat}</button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="messages-area">
         {messages.map((msg, index) => (
           <div 
             key={msg._id || index} 
-            className={`message-wrapper ${msg.from === user.id ? 'sent' : 'received'}`}
+            className={`message-wrapper ${msg.from === user.id ? 'sent' : 'received'} ${selectedMessages.includes(msg._id) ? 'selected' : ''}`}
+            onClick={() => toggleMessageSelection(msg._id)}
           >
             <div className={`message-bubble ${msg.isSticker ? 'sticker' : ''} fade-in`}>
               {msg.isSticker ? (
@@ -84,17 +117,27 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <form className="input-bar" onSubmit={handleSubmit}>
-        <input 
-          type="text" 
-          placeholder={t.typeMessage} 
-          value={text} 
-          onChange={(e) => setText(e.target.value)} 
-        />
-        <button type="submit" disabled={!text.trim()} className="send-btn">
-          <Send size={20} />
-        </button>
-      </form>
+      {selectedMessages.length > 0 ? (
+        <div className="selection-bar">
+          <span>{selectedMessages.length} {t.deleteSelected}</span>
+          <div className="selection-actions">
+            <button className="btn-cancel" onClick={() => setSelectedMessages([])}>{t.cancel}</button>
+            <button className="btn-delete" onClick={handleDeleteSelected}>{t.deleteSelected}</button>
+          </div>
+        </div>
+      ) : (
+        <form className="input-bar" onSubmit={handleSubmit}>
+          <input 
+            type="text" 
+            placeholder={t.typeMessage} 
+            value={text} 
+            onChange={(e) => setText(e.target.value)} 
+          />
+          <button type="submit" disabled={!text.trim()} className="send-btn">
+            <Send size={20} />
+          </button>
+        </form>
+      )}
 
       <style jsx="true">{`
         .chat-window {
@@ -136,6 +179,33 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
         .friend-profile h3 {
           font-size: 1rem;
           font-weight: 600;
+        }
+        .header-actions {
+          position: relative;
+        }
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: var(--bg-primary);
+          border: 1px solid var(--border);
+          border-radius: 0.75rem;
+          box-shadow: var(--shadow);
+          padding: 0.5rem;
+          min-width: 150px;
+          z-index: 100;
+        }
+        .dropdown-menu button {
+          width: 100%;
+          text-align: left;
+          padding: 0.5rem 1rem;
+          background: transparent;
+          color: #ef4444;
+          font-size: 0.9rem;
+          border-radius: 0.5rem;
+        }
+        .dropdown-menu button:hover {
+          background: rgba(239, 68, 68, 0.05);
         }
         .status {
           font-size: 0.75rem;
@@ -185,6 +255,10 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
           align-self: flex-start;
           align-items: flex-start;
         }
+        .message-wrapper.selected .message-bubble {
+          outline: 2px solid var(--accent);
+          outline-offset: 2px;
+        }
         .message-bubble {
           padding: 0.75rem 1rem;
           border-radius: 1.25rem;
@@ -213,6 +287,33 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
           color: var(--text-secondary);
           margin-top: 0.25rem;
           padding: 0 0.5rem;
+        }
+        .selection-bar {
+          padding: 1rem 1.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: var(--bg-primary);
+          border-top: 1px solid var(--border);
+          animation: slideUp 0.3s ease;
+        }
+        .selection-actions {
+          display: flex;
+          gap: 1rem;
+        }
+        .selection-actions button {
+          padding: 0.5rem 1rem;
+          border-radius: 0.75rem;
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+        .btn-cancel {
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+        }
+        .btn-delete {
+          background: #ef4444;
+          color: white;
         }
         .input-bar {
           padding: 1.25rem 1.5rem;
@@ -249,6 +350,11 @@ const ChatWindow = ({ friend, messages, onSendMessage, onBack, isOnline }) => {
         .send-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
         }
 
         @media (max-width: 768px) {
