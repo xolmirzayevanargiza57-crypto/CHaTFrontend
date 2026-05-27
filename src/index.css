@@ -41,7 +41,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
   background: var(--bg-primary); 
   color: var(--text-primary); 
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 #root {

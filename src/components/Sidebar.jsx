@@ -42,7 +42,11 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
             onClick={() => onSelectFriend(friend)}
           >
             <div className="avatar">
-              {getInitials(friend.firstName, friend.lastName)}
+              {friend.avatar ? (
+                  <img src={friend.avatar} alt="avatar" />
+              ) : (
+                  getInitials(friend.firstName, friend.lastName)
+              )}
               {onlineUsers.includes(friend._id) && <div className="online-status"></div>}
             </div>
             <div className="friend-info">
@@ -141,6 +145,12 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
           position: relative;
           flex-shrink: 0;
           box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+          overflow: hidden;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .online-status {
           width: 14px;

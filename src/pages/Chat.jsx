@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
 import ChatWindow from '../components/ChatWindow';
+import VideoCall from '../components/VideoCall';
 
 let socket;
 
@@ -13,6 +14,9 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
+  
+  // Call States
+  const [call, setCall] = useState({ isReceiving: false, from: null, signal: null, active: false });
 
   const fetchFriends = useCallback(async () => {
     try {
@@ -26,7 +30,6 @@ const Chat = () => {
   useEffect(() => {
     fetchFriends();
     
-    // Connect socket if not connected
     if (!socket) {
       const socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
       socket = io(socketUrl);
@@ -42,16 +45,19 @@ const Chat = () => {
       setOnlineUsers((prev) => prev.filter(id => id !== userId));
     });
 
+    socket.on('callUser', ({ from, signal }) => {
+        const caller = friends.find(f => f._id === from);
+        setCall({ isReceiving: true, from: caller || { _id: from, firstName: 'User' }, signal, active: true });
+    });
+
     socket.on('receiveMessage', (message) => {
       setMessages((prev) => {
-        // If this message belongs to the current open chat
         if (selectedFriend && (message.from === selectedFriend._id || message.to === selectedFriend._id)) {
           return [...prev, message];
         }
         return prev;
       });
 
-      // If it's not the current friend, increment unread count
       if (!selectedFriend || message.from !== selectedFriend._id) {
          setFriends(prev => prev.map(f => 
           f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f
@@ -84,23 +90,22 @@ const Chat = () => {
     return () => {
       socket.off('userOnline');
       socket.off('userOffline');
+      socket.off('callUser');
       socket.off('receiveMessage');
       socket.off('chatCleared');
       socket.off('messagesDeleted');
       socket.off('friendRemoved');
       socket.off('newFriend');
     };
-  }, [user.id, selectedFriend, fetchFriends]);
+  }, [user.id, selectedFriend, friends, fetchFriends]);
 
-  useEffect(() => {
-    if (selectedFriend) {
-      fetchMessages(selectedFriend._id);
-      // Clear unread count
-      setFriends(prev => prev.map(f => 
-        f._id === selectedFriend._id ? { ...f, unreadCount: 0 } : f
-      ));
-    }
-  }, [selectedFriend]);
+  const handleStartCall = () => {
+      setCall({ isReceiving: false, from: selectedFriend, signal: null, active: true });
+  };
+
+  const handleEndCall = () => {
+      setCall({ isReceiving: false, from: null, signal: null, active: false });
+  };
 
   const fetchMessages = async (friendId) => {
     try {
@@ -174,7 +179,18 @@ const Chat = () => {
         onClearChat={handleClearChat}
         onDeleteMessages={handleDeleteMessages}
         onBack={() => setSelectedFriend(null)}
+        onStartCall={handleStartCall}
       />
+
+      {call.active && (
+          <VideoCall 
+            socket={socket} 
+            friend={call.from} 
+            isReceiving={call.isReceiving} 
+            signal={call.signal}
+            onEnd={handleEndCall}
+          />
+      )}
 
       <style jsx="true">{`
         .chat-page {

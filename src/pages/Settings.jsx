@@ -67,13 +67,14 @@ const Settings = () => {
 
       <style jsx="true">{`
         .settings-page {
-          max-width: 500px;
+          max-width: 600px;
           margin: 0 auto;
-          padding: 1.5rem;
-          height: 100vh;
+          padding: 1.5rem 1.5rem 6rem;
+          min-height: 100vh;
           display: flex;
           flex-direction: column;
           background: var(--bg-primary);
+          overflow-y: auto;
         }
         .settings-header {
           display: flex;
@@ -106,13 +107,14 @@ const Settings = () => {
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
+          flex: 1;
         }
         .settings-card {
-          padding: 1.25rem;
-          border-radius: 20px;
+          padding: 1.5rem;
+          border-radius: 24px;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
         .glass {
           backdrop-filter: blur(10px);
@@ -122,54 +124,62 @@ const Settings = () => {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          margin-bottom: 1.25rem;
-          font-weight: 600;
+          margin-bottom: 1.5rem;
+          font-weight: 700;
           color: var(--text-secondary);
-          letter-spacing: -0.01em;
-          font-size: 0.95rem;
+          letter-spacing: 0.5px;
+          font-size: 0.85rem;
           text-transform: uppercase;
         }
         .language-list {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.75rem;
         }
         .language-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1rem 1.25rem;
-          border-radius: 14px;
-          background: rgba(128, 128, 128, 0.05);
+          padding: 1.15rem 1.5rem;
+          border-radius: 18px;
+          background: var(--bg-primary);
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid transparent;
+          border: 1px solid var(--border);
         }
         .language-item:hover {
-          background: rgba(128, 128, 128, 0.1);
+          background: rgba(128, 128, 128, 0.05);
+          transform: scale(1.02);
         }
         .language-item.active {
           background: var(--accent);
           color: white;
-          box-shadow: 0 8px 16px rgba(0, 122, 255, 0.3);
+          border-color: var(--accent);
+          box-shadow: 0 10px 25px rgba(0, 122, 255, 0.3);
         }
         .language-item span {
-          font-weight: 500;
+          font-weight: 600;
+          font-size: 1.05rem;
         }
         .language-item img {
-          width: 24px;
+          width: 28px;
           height: auto;
-          border-radius: 4px;
+          border-radius: 6px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .setting-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.75rem 0.25rem;
+          padding: 1.15rem 1.5rem;
           cursor: pointer;
+          background: var(--bg-primary);
+          border: 1px solid var(--border);
+          border-radius: 18px;
         }
         .setting-row span {
-          font-weight: 500;
+          font-weight: 600;
+          font-size: 1.05rem;
           color: var(--text-primary);
         }
         .native-toggle {
@@ -200,6 +210,12 @@ const Settings = () => {
         .icon-blue { color: #007aff; }
         .icon-yellow { color: #ffcc00; }
         .icon-purple { color: #af52de; }
+        
+        @media (max-width: 768px) {
+            .settings-page {
+                padding-bottom: 80px;
+            }
+        }
       `}</style>
     </div>
   );

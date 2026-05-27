@@ -12,9 +12,21 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
-    lastName: user?.lastName || ''
+    lastName: user?.lastName || '',
+    avatar: user?.avatar || ''
   });
   const [profileData, setProfileData] = useState(null);
+
+  const avatars = [
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo'
+  ];
 
   useEffect(() => {
     fetchProfile();
@@ -26,7 +38,8 @@ const Profile = () => {
       setProfileData(response.data);
       setFormData({
           firstName: response.data.firstName,
-          lastName: response.data.lastName
+          lastName: response.data.lastName,
+          avatar: response.data.avatar || ''
       });
     } catch (err) {
       console.error(err);
@@ -61,9 +74,34 @@ const Profile = () => {
         <h1>{t.profile}</h1>
       </div>
 
-      <div className="profile-card">
-        <div className="avatar-large">
-          {getInitials(profileData.firstName, profileData.lastName)}
+      <div className="profile-card glass">
+        <div className="avatar-section">
+          <div className="avatar-large">
+            {formData.avatar ? (
+                <img src={formData.avatar} alt="avatar" />
+            ) : (
+                getInitials(profileData.firstName, profileData.lastName)
+            )}
+          </div>
+          {isEditing && (
+              <div className="avatar-grid">
+                  {avatars.map((url, i) => (
+                      <div 
+                        key={i} 
+                        className={`avatar-option ${formData.avatar === url ? 'selected' : ''}`}
+                        onClick={() => setFormData({...formData, avatar: url})}
+                      >
+                          <img src={url} alt={`avatar-${i}`} />
+                      </div>
+                  ))}
+                  <div 
+                    className={`avatar-option initials ${!formData.avatar ? 'selected' : ''}`}
+                    onClick={() => setFormData({...formData, avatar: ''})}
+                  >
+                      {getInitials(formData.firstName, formData.lastName)}
+                  </div>
+              </div>
+          )}
         </div>
         
         {isEditing ? (
@@ -121,116 +159,182 @@ const Profile = () => {
         .profile-page {
           max-width: 600px;
           margin: 0 auto;
-          padding: 2rem 1rem;
-          height: 100vh;
+          padding: 2rem 1.5rem 6rem;
+          min-height: 100vh;
+          overflow-y: auto;
         }
         .profile-header {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 1.25rem;
           margin-bottom: 2rem;
+          padding-top: 1rem;
+        }
+        .profile-header h1 {
+          font-size: 1.75rem;
+          font-weight: 700;
         }
         .back-btn {
-          background: var(--bg-secondary);
+          background: rgba(128, 128, 128, 0.1);
           color: var(--text-primary);
-          padding: 0.5rem;
-          border-radius: 0.75rem;
-        }
-        .profile-card {
-          background: var(--bg-primary);
-          border-radius: 1.5rem;
-          padding: 2.5rem;
-          box-shadow: var(--shadow);
-          text-align: center;
-        }
-        .avatar-large {
-          width: 100px;
-          height: 100px;
-          background: var(--accent);
-          color: white;
-          border-radius: 2.5rem;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 2.5rem;
+          border-radius: 14px;
+        }
+        .profile-card {
+          background: var(--bg-secondary);
+          border-radius: 2rem;
+          padding: 2rem;
+          box-shadow: var(--shadow);
+          text-align: center;
+          border: 1px solid var(--border);
+        }
+        .glass {
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+        }
+        .avatar-section {
+            margin-bottom: 2rem;
+        }
+        .avatar-large {
+          width: 120px;
+          height: 120px;
+          background: linear-gradient(135deg, var(--accent), #60a5fa);
+          color: white;
+          border-radius: 35px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 3rem;
           font-weight: 800;
           margin: 0 auto 1.5rem;
-          box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+          box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+          overflow: hidden;
+        }
+        .avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(128, 128, 128, 0.05);
+            border-radius: 1.25rem;
+        }
+        .avatar-option {
+            aspect-ratio: 1;
+            border-radius: 14px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+        }
+        .avatar-option img {
+            width: 80%;
+            height: 80%;
+        }
+        .avatar-option.selected {
+            border-color: var(--accent);
+            transform: scale(1.1);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .avatar-option.initials {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.9rem;
         }
         .profile-info h2 {
-          font-size: 1.5rem;
-          margin-bottom: 0.25rem;
+          font-size: 1.75rem;
+          margin-bottom: 0.5rem;
+          font-weight: 700;
         }
         .profile-info .username {
           color: var(--text-secondary);
           margin-bottom: 1.5rem;
+          font-size: 1rem;
         }
         .edit-btn {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.6rem 1.25rem;
-          background: var(--bg-secondary);
-          color: var(--accent);
-          border-radius: 0.75rem;
+          padding: 0.75rem 1.5rem;
+          background: var(--accent);
+          color: white;
+          border-radius: 1rem;
           font-weight: 600;
-          font-size: 0.9rem;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.3);
         }
         .profile-stats {
           margin-top: 2.5rem;
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
+          gap: 1.5rem;
           padding-top: 2rem;
           border-top: 1px solid var(--border);
         }
         .stat-item {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 1rem;
           text-align: left;
         }
         .stat-item svg {
           color: var(--accent);
         }
         .stat-label {
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: var(--text-secondary);
         }
         .stat-value {
-          font-weight: 600;
-          font-size: 0.95rem;
+          font-weight: 700;
+          font-size: 1rem;
         }
         .edit-form {
             text-align: left;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.25rem;
         }
         .form-group label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+            font-weight: 600;
             color: var(--text-secondary);
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.5rem;
         }
         .form-group input {
             width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 1rem;
             border: 1px solid var(--border);
-            background: var(--bg-secondary);
+            background: var(--bg-primary);
             color: var(--text-primary);
             outline: none;
+            font-size: 1rem;
+        }
+        .form-group input:focus {
+            border-color: var(--accent);
         }
         .edit-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
         }
         .save-btn, .cancel-btn {
             flex: 1;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
+            padding: 1rem;
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -240,9 +344,10 @@ const Profile = () => {
         .save-btn {
             background: var(--accent);
             color: white;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
         }
         .cancel-btn {
-            background: var(--bg-secondary);
+            background: rgba(128, 128, 128, 0.1);
             color: var(--text-secondary);
         }
         .loading {
@@ -251,8 +356,19 @@ const Profile = () => {
             align-items: center;
             height: 100vh;
             color: var(--text-secondary);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .profile-page {
+                padding-bottom: 80px;
+            }
+            .profile-stats {
+                grid-template-columns: 1fr;
+            }
         }
       `}</style>
+
     </div>
   );
 };

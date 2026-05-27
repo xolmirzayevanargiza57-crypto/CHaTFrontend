@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
-import { Send, ArrowLeft, MoreVertical } from 'lucide-react';
+import { Send, ArrowLeft, MoreVertical, Video } from 'lucide-react';
 
-const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMessages, onBack, isOnline }) => {
+const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMessages, onBack, isOnline, onStartCall }) => {
   const [text, setText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState([]);
@@ -61,7 +61,8 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
   if (!friend) {
     return (
       <div className="chat-window empty">
-        <div className="welcome-content">
+        <div className="welcome-content fade-in">
+          <div className="welcome-logo">CHaT</div>
           <h1>{t.welcome}, {user.firstName}!</h1>
           <p>{t.noMessages}</p>
         </div>
@@ -71,13 +72,17 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
 
   return (
     <div className="chat-window">
-      <div className="chat-header">
+      <div className="chat-header glass">
         <button className="back-btn" onClick={onBack}>
           <ArrowLeft size={24} />
         </button>
         <div className="friend-profile">
           <div className="avatar small">
-            {getInitials(friend.firstName, friend.lastName)}
+            {friend.avatar ? (
+                <img src={friend.avatar} alt="avatar" />
+            ) : (
+                getInitials(friend.firstName, friend.lastName)
+            )}
             {isOnline && <div className="online-dot"></div>}
           </div>
           <div>
@@ -86,6 +91,9 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           </div>
         </div>
         <div className="header-actions">
+          <button className="icon-btn call-btn" onClick={onStartCall} title="Video Call">
+            <Video size={22} />
+          </button>
           <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}>
             <MoreVertical size={20} />
           </button>
@@ -155,9 +163,20 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
         .welcome-content {
           text-align: center;
           color: var(--text-secondary);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+        }
+        .welcome-logo {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--accent);
+            opacity: 0.1;
+            letter-spacing: -2px;
         }
         .chat-header {
-          padding: 1rem 1.5rem;
+          padding: 0.85rem 1.5rem;
           display: flex;
           align-items: center;
           gap: 1rem;
@@ -174,14 +193,25 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           flex: 1;
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 1rem;
         }
         .friend-profile h3 {
-          font-size: 1rem;
-          font-weight: 600;
+          font-size: 1.1rem;
+          font-weight: 700;
         }
         .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
           position: relative;
+        }
+        .call-btn {
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.08) !important;
+        }
+        .call-btn:hover {
+            background: var(--accent) !important;
+            color: white !important;
         }
         .dropdown-menu {
           position: absolute;
@@ -189,49 +219,58 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           right: 0;
           background: var(--bg-primary);
           border: 1px solid var(--border);
-          border-radius: 0.75rem;
-          box-shadow: var(--shadow);
+          border-radius: 1.25rem;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           padding: 0.5rem;
-          min-width: 150px;
+          min-width: 180px;
           z-index: 100;
+          margin-top: 0.5rem;
         }
         .dropdown-menu button {
           width: 100%;
           text-align: left;
-          padding: 0.5rem 1rem;
+          padding: 0.75rem 1rem;
           background: transparent;
-          color: #ef4444;
-          font-size: 0.9rem;
-          border-radius: 0.5rem;
+          color: #ff3b30;
+          font-size: 0.95rem;
+          border-radius: 0.75rem;
+          font-weight: 600;
         }
         .dropdown-menu button:hover {
-          background: rgba(239, 68, 68, 0.05);
+          background: rgba(255, 59, 48, 0.05);
         }
         .status {
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           color: var(--text-secondary);
         }
         .avatar.small {
-          width: 40px;
-          height: 40px;
-          background: var(--accent);
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, var(--accent), #60a5fa);
           color: white;
-          border-radius: 0.75rem;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
           position: relative;
+          overflow: hidden;
+        }
+        .avatar.small img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .online-dot {
-            width: 10px;
-            height: 10px;
-            background: #10b981;
+            width: 12px;
+            height: 12px;
+            background: #34c759;
             border: 2px solid var(--bg-primary);
             border-radius: 50%;
             position: absolute;
             bottom: -1px;
             right: -1px;
+            z-index: 2;
         }
         .messages-area {
           flex: 1;
