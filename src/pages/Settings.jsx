@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { translations } from '../i18n';
-import { Globe, Moon, Sun, ChevronLeft } from 'lucide-react';
+import { Globe, Moon, Sun, ChevronLeft, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
@@ -12,206 +12,169 @@ const Settings = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="settings-page fade-in">
-      <div className="settings-header">
-        <button className="back-btn" onClick={() => navigate('/chat')}>
-          <ChevronLeft size={24} />
+    <div className="tg-settings">
+      <div className="tg-header">
+        <button className="tg-back" onClick={() => navigate('/chat')}>
+          <ChevronLeft size={22} />
         </button>
         <h1>{t.settings}</h1>
       </div>
 
-      <div className="settings-content">
-        <div className="settings-card glass">
-          <div className="section-title">
-            <Globe className="icon-blue" size={20} />
-            <span>{t.language}</span>
-          </div>
-          <div className="language-list">
-            <div 
-              className={`language-item ${lang === 'uz' ? 'active' : ''}`} 
-              onClick={() => changeLang('uz')}
-            >
-              <span>O'zbekcha</span>
-              <img src="https://flagcdn.com/w20/uz.png" alt="uz" />
-            </div>
-            <div 
-              className={`language-item ${lang === 'ru' ? 'active' : ''}`} 
-              onClick={() => changeLang('ru')}
-            >
-              <span>Русский</span>
-              <img src="https://flagcdn.com/w20/ru.png" alt="ru" />
-            </div>
-            <div 
-              className={`language-item ${lang === 'en' ? 'active' : ''}`} 
-              onClick={() => changeLang('en')}
-            >
-              <span>English</span>
-              <img src="https://flagcdn.com/w20/gb.png" alt="en" />
-            </div>
-          </div>
+      <div className="tg-section">
+        <div className="tg-section-label">
+          <Globe size={16} />
+          <span>{t.language}</span>
         </div>
+        <div className="tg-list">
+          {[
+            { code: 'uz', name: "O'zbekcha", flag: 'https://flagcdn.com/w40/uz.png' },
+            { code: 'ru', name: 'Русский', flag: 'https://flagcdn.com/w40/ru.png' },
+            { code: 'en', name: 'English', flag: 'https://flagcdn.com/w40/gb.png' },
+          ].map((item) => (
+            <div 
+              key={item.code}
+              className={`tg-list-item ${lang === item.code ? 'active' : ''}`}
+              onClick={() => changeLang(item.code)}
+            >
+              <img src={item.flag} alt={item.code} className="tg-flag" />
+              <span className="tg-list-text">{item.name}</span>
+              {lang === item.code && <Check size={20} className="tg-check" />}
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <div className="settings-card glass">
-          <div className="section-title">
-            {theme === 'light' ? <Sun className="icon-yellow" size={20} /> : <Moon className="icon-purple" size={20} />}
-            <span>{t.theme}</span>
-          </div>
-          <div className="setting-row" onClick={toggleTheme}>
-            <span>{theme === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
-            <div className={`native-toggle ${theme === 'dark' ? 'on' : ''}`}>
-              <div className="toggle-thumb"></div>
+      <div className="tg-section">
+        <div className="tg-section-label">
+          {theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
+          <span>{t.theme}</span>
+        </div>
+        <div className="tg-list">
+          <div className="tg-list-item" onClick={toggleTheme}>
+            <span className="tg-list-text">{theme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode'}</span>
+            <div className={`tg-toggle ${theme === 'dark' ? 'on' : ''}`}>
+              <div className="tg-toggle-thumb"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <style jsx="true">{`
-        .settings-page {
-          max-width: 1000px;
-          margin: 0 auto;
-          padding: 1.5rem 1.5rem 6rem;
+      <style>{`
+        .tg-settings {
+          width: 100%;
           min-height: 100vh;
-          display: flex;
-          flex-direction: column;
           background: var(--bg-primary);
+          padding-bottom: 100px;
         }
-        .settings-header {
+        .tg-header {
           display: flex;
           align-items: center;
-          gap: 1.25rem;
-          margin-bottom: 2.5rem;
-          padding-top: 1rem;
+          gap: 12px;
+          padding: 16px 20px;
+          position: sticky;
+          top: 0;
+          background: var(--bg-primary);
+          border-bottom: 1px solid var(--border);
+          z-index: 10;
         }
-        .settings-header h1 {
-          font-size: 2.25rem;
-          font-weight: 800;
-          color: var(--text-primary);
-          letter-spacing: -1px;
+        .tg-header h1 {
+          font-size: 20px;
+          font-weight: 700;
         }
-        .back-btn {
-          background: rgba(128, 128, 128, 0.1);
-          color: var(--text-primary);
-          width: 50px;
-          height: 50px;
+        .tg-back {
+          width: 36px;
+          height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 16px;
-          transition: all 0.2s;
+          border-radius: 50%;
+          color: var(--accent);
         }
-        .back-btn:hover {
-          background: rgba(128, 128, 128, 0.2);
-          transform: scale(0.95);
+        .tg-back:hover {
+          background: rgba(135,116,225,0.1);
         }
-        .settings-content {
-          display: flex;
-          flex-direction: column;
-          gap: 2rem;
-          flex: 1;
+        .tg-section {
+          padding: 0;
         }
-        .settings-card {
-          padding: 2.5rem;
-          border-radius: 32px;
-          background: var(--bg-secondary);
-          border: 1px solid var(--border);
-          box-shadow: 0 10px 40px rgba(0,0,0,0.04);
-          width: 100%;
-        }
-        .section-title {
+        .tg-section-label {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          margin-bottom: 2rem;
-          font-weight: 800;
-          color: var(--text-secondary);
-          letter-spacing: 1px;
-          font-size: 0.9rem;
+          gap: 8px;
+          padding: 14px 20px 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--accent);
           text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
-        .language-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
+        .tg-list {
+          background: var(--bg-secondary);
+          border-top: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
         }
-        .language-item {
+        .tg-list-item {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 1.15rem 1.5rem;
-          border-radius: 18px;
-          background: var(--bg-primary);
+          gap: 14px;
+          padding: 14px 20px;
           cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
+          transition: background 0.15s;
         }
-        .language-item:hover {
-          background: rgba(128, 128, 128, 0.05);
-          transform: scale(1.02);
+        .tg-list-item:last-child {
+          border-bottom: none;
         }
-        .language-item.active {
-          background: var(--accent);
-          color: white;
-          border-color: var(--accent);
-          box-shadow: 0 10px 25px rgba(0, 122, 255, 0.3);
+        .tg-list-item:hover {
+          background: rgba(135,116,225,0.05);
         }
-        .language-item span {
-          font-weight: 600;
-          font-size: 1.05rem;
+        .tg-list-item.active {
+          background: rgba(135,116,225,0.08);
         }
-        .language-item img {
+        .tg-flag {
           width: 28px;
-          height: auto;
-          border-radius: 6px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          height: 20px;
+          border-radius: 3px;
+          object-fit: cover;
         }
-        .setting-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 1.15rem 1.5rem;
-          cursor: pointer;
-          background: var(--bg-primary);
-          border: 1px solid var(--border);
-          border-radius: 18px;
-        }
-        .setting-row span {
-          font-weight: 600;
-          font-size: 1.05rem;
+        .tg-list-text {
+          flex: 1;
+          font-size: 16px;
+          font-weight: 500;
           color: var(--text-primary);
         }
-        .native-toggle {
-          width: 52px;
-          height: 31px;
-          background: #e9e9ea;
+        .tg-check {
+          color: var(--accent);
+        }
+        .tg-toggle {
+          width: 50px;
+          height: 28px;
+          background: #ccc;
           border-radius: 100px;
           position: relative;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: background 0.3s;
+          flex-shrink: 0;
         }
-        .native-toggle.on {
-          background: #34c759;
+        .tg-toggle.on {
+          background: var(--accent);
         }
-        .toggle-thumb {
-          width: 27px;
-          height: 27px;
+        .tg-toggle-thumb {
+          width: 24px;
+          height: 24px;
           background: white;
           border-radius: 50%;
           position: absolute;
           top: 2px;
           left: 2px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+          transition: left 0.3s;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
-        .native-toggle.on .toggle-thumb {
-          left: 23px;
+        .tg-toggle.on .tg-toggle-thumb {
+          left: 24px;
         }
-        .icon-blue { color: #007aff; }
-        .icon-yellow { color: #ffcc00; }
-        .icon-purple { color: #af52de; }
-        
         @media (max-width: 768px) {
-            .settings-page {
-                padding-bottom: 80px;
-            }
+          .tg-settings {
+            padding-bottom: 80px;
+          }
         }
       `}</style>
     </div>
