@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "nodeVersion": "20",
+  "env": {
+    "VITE_API_URL": "@mongodb-chat-backend"
+  }
+}
