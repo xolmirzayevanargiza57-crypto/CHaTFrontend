@@ -40,6 +40,7 @@ const SearchBar = ({ onFriendAdded }) => {
       await axios.post(`/api/users/add-friend/${userId}`);
       setResults([]);
       setQuery('');
+      alert("Do'stlik so'rovi yuborildi va do'st qo'shildi!");
       if (onFriendAdded) onFriendAdded();
     } catch (err) {
       alert(err.response?.data?.message || "Error adding friend");
@@ -52,6 +53,7 @@ const SearchBar = ({ onFriendAdded }) => {
       await axios.post(`/api/users/add-friend/username/${username}`);
       setResults([]);
       setQuery('');
+      alert("Do'stlik so'rovi yuborildi va do'st qo'shildi!");
       if (onFriendAdded) onFriendAdded();
     } catch (err) {
       alert(err.response?.data?.message || "Error adding friend");

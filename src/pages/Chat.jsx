@@ -46,8 +46,11 @@ const Chat = () => {
     });
 
     socket.on('callUser', ({ from, signal }) => {
-        const caller = friends.find(f => f._id === from);
-        setCall({ isReceiving: true, from: caller || { _id: from, firstName: 'User' }, signal, active: true });
+        setFriends(prev => {
+            const caller = prev.find(f => f._id === from);
+            setCall({ isReceiving: true, from: caller || { _id: from, firstName: 'User' }, signal, active: true });
+            return prev;
+        });
     });
 
     socket.on('receiveMessage', (message) => {
@@ -59,9 +62,14 @@ const Chat = () => {
       });
 
       if (!selectedFriend || message.from !== selectedFriend._id) {
-         setFriends(prev => prev.map(f => 
-          f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f
-        ));
+         setFriends(prev => {
+             const exists = prev.some(f => f._id === message.from);
+             if (exists) {
+                 return prev.map(f => f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f);
+             }
+             // If not in list, we'll wait for newFriend event or refresh
+             return prev;
+         });
       }
     });
 
@@ -84,7 +92,13 @@ const Chat = () => {
     });
 
     socket.on('newFriend', (newFriend) => {
-        setFriends(prev => [...prev, { ...newFriend, unreadCount: 1 }]);
+        setFriends(prev => {
+            const exists = prev.some(f => f._id === newFriend._id);
+            if (!exists) {
+                return [...prev, { ...newFriend, unreadCount: 1 }];
+            }
+            return prev;
+        });
     });
 
     return () => {
@@ -97,7 +111,7 @@ const Chat = () => {
       socket.off('friendRemoved');
       socket.off('newFriend');
     };
-  }, [user.id, selectedFriend, friends, fetchFriends]);
+  }, [user.id, selectedFriend, fetchFriends]);
 
   const handleStartCall = () => {
       setCall({ isReceiving: false, from: selectedFriend, signal: null, active: true });
