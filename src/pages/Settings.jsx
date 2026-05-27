@@ -67,14 +67,13 @@ const Settings = () => {
 
       <style jsx="true">{`
         .settings-page {
-          max-width: 600px;
+          max-width: 1000px;
           margin: 0 auto;
           padding: 1.5rem 1.5rem 6rem;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
           background: var(--bg-primary);
-          overflow-y: auto;
         }
         .settings-header {
           display: flex;
@@ -84,19 +83,20 @@ const Settings = () => {
           padding-top: 1rem;
         }
         .settings-header h1 {
-          font-size: 1.75rem;
-          font-weight: 700;
+          font-size: 2.25rem;
+          font-weight: 800;
           color: var(--text-primary);
+          letter-spacing: -1px;
         }
         .back-btn {
           background: rgba(128, 128, 128, 0.1);
           color: var(--text-primary);
-          width: 44px;
-          height: 44px;
+          width: 50px;
+          height: 50px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 14px;
+          border-radius: 16px;
           transition: all 0.2s;
         }
         .back-btn:hover {
@@ -106,29 +106,26 @@ const Settings = () => {
         .settings-content {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 2rem;
           flex: 1;
         }
         .settings-card {
-          padding: 1.5rem;
-          border-radius: 24px;
+          padding: 2.5rem;
+          border-radius: 32px;
           background: var(--bg-secondary);
           border: 1px solid var(--border);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-        }
-        .glass {
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
+          box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+          width: 100%;
         }
         .section-title {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 1.5rem;
-          font-weight: 700;
+          gap: 1rem;
+          margin-bottom: 2rem;
+          font-weight: 800;
           color: var(--text-secondary);
-          letter-spacing: 0.5px;
-          font-size: 0.85rem;
+          letter-spacing: 1px;
+          font-size: 0.9rem;
           text-transform: uppercase;
         }
         .language-list {

@@ -25,7 +25,11 @@ const Profile = () => {
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo'
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Nala',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Bear',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=Tigger'
   ];
 
   useEffect(() => {
@@ -157,11 +161,10 @@ const Profile = () => {
 
       <style jsx="true">{`
         .profile-page {
-          max-width: 600px;
+          max-width: 800px;
           margin: 0 auto;
           padding: 2rem 1.5rem 6rem;
           min-height: 100vh;
-          overflow-y: auto;
         }
         .profile-header {
           display: flex;
