@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { translations } from '../i18n';
 import SearchBar from './SearchBar';
-import { Sun, Moon, MessageSquare, Settings, User, LogOut, Plus, X, Heart, Eye, ChevronLeft, ChevronRight, Music, StopCircle } from 'lucide-react';
+import { Sun, Moon, MessageSquare, Settings, User, LogOut, Plus, X, Heart, Eye, ChevronLeft, ChevronRight, Music, StopCircle, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFriendAdded, onRemoveFriend }) => {
@@ -112,6 +112,16 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
     } catch(e) {}
   };
 
+  const handleDeleteStory = async (e, storyId) => {
+    e.stopPropagation();
+    if (!window.confirm("Storyni o'chirasizmi?")) return;
+    try {
+      await axios.delete(`/api/stories/${storyId}`);
+      setViewingStory(null);
+      fetchStories();
+    } catch(e) { alert("Xatolik!"); }
+  };
+
   const closeStoryViewer = () => {
     clearTimeout(storyTimerRef.current);
     setViewingStory(null);
@@ -216,9 +226,13 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
                       {isMuted ? <Music size={20} /> : <StopCircle size={20} />}
                     </button>
                  )}
+                 {viewingStory.user._id === user.id && (
+                    <button className="story-del-btn" onClick={(e) => handleDeleteStory(e, currentStory._id)}><Trash2 size={20} /></button>
+                 )}
                  <button className="story-close" onClick={closeStoryViewer}><X size={24} /></button>
               </div>
             </div>
+            
             
             <div className="story-media">
               {currentStory.fileType === 'video' ? (
@@ -356,8 +370,9 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         .story-time { color: rgba(255,255,255,0.7); font-size: 0.8rem; }
         
         .header-story-actions { display: flex; align-items: center; gap: 10px; }
-        .story-audio-toggle { background: rgba(0,0,0,0.3); color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .story-audio-toggle, .story-del-btn { background: rgba(0,0,0,0.3); color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .story-audio-toggle:hover { background: rgba(135,116,225,0.5); }
+        .story-del-btn:hover { background: rgba(255, 59, 48, 0.5); }
         .story-close { color: white; padding: 8px; cursor: pointer; border-radius: 50%; transition: 0.2s; }
         .story-close:hover { background: rgba(255,255,255,0.1); }
         

@@ -9,22 +9,22 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 
 const ANIME_AVATARS = [
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Neko1',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Sakura2',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Naruto3',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Luffy4',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Goku5',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Anime6',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Manga7',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Kawaii8',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Otaku9',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Chibi10',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Senpai11',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Kunoichi12',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Miku13',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Hinata14',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Zero15',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=Rem16',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Yellow1',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Happy2',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Sun3',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Joy4',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Smile5',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Bright6',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Beam7',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Laugh8',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Cheer9',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Gold10',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Star11',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Amber12',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Honey13',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=Lemon14',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=HoneyBear15',
+  'https://api.dicebear.com/7.x/big-smile/svg?seed=SunnyDay16',
 ];
 
 const Profile = () => {
