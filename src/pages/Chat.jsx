@@ -44,30 +44,33 @@ const Chat = () => {
       socket.emit('join', user.id);
     });
 
-    socket.on('userOnline', (userId) => {
-      setOnlineUsers((prev) => Array.from(new Set([...prev, userId])));
-    });
-
-    socket.on('userOffline', (userId) => {
-      setOnlineUsers((prev) => prev.filter(id => id !== userId));
+    socket.on('onlineUsersList', (userIds) => {
+      setOnlineUsers(userIds);
     });
 
     socket.on('receiveMessage', (message) => {
       setMessages((prev) => {
-        const isFromMe = message.from === user.id;
         const isSelectedFriend = selectedFriend && (message.from === selectedFriend._id || message.to === selectedFriend._id);
-        
         if (isSelectedFriend) {
-          // Xabar dublikat bo'lmasligi uchun tekshiramiz
           if (prev.some(m => m._id === message._id)) return prev;
           return [...prev, message];
         }
         return prev;
       });
 
-      if (!selectedFriend || message.from !== selectedFriend._id) {
-         setFriends(prev => prev.map(f => f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f));
-      }
+      setFriends(prev => {
+         const friendId = message.from === user.id ? message.to : message.from;
+         return prev.map(f => {
+           if (f._id === friendId) {
+             return { 
+               ...f, 
+               unreadCount: (!selectedFriend || selectedFriend._id !== friendId) ? (f.unreadCount || 0) + 1 : 0,
+               lastMessageAt: message.createdAt
+             };
+           }
+           return f;
+         }).sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0));
+      });
     });
 
     socket.on('chatCleared', (data) => {
@@ -120,9 +123,10 @@ const Chat = () => {
 
   const handleSendMessage = async (payload) => {
     try {
-      // payload: { text, isSticker, fileType, file_id, fileName, fileMimeType, fileUrl }
       const response = await axios.post(`/api/messages/${selectedFriend._id}`, payload);
       setMessages(prev => [...prev, response.data]);
+      setFriends(prev => prev.map(f => f._id === selectedFriend._id ? { ...f, lastMessageAt: response.data.createdAt } : f)
+          .sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
     } catch (err) {
       console.error(err);
     }
@@ -176,6 +180,7 @@ const Chat = () => {
         onClearForMe={handleClearForMe}
         onDeleteMessages={handleDeleteMessages}
         onBack={() => setSelectedFriend(null)}
+        socket={socket}
       />
 
       <style jsx="true">{`
