@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios fr https://github.com/xolmirzayevanargiza57-crypto/CHaTBackendom 'axios';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import { Search, UserPlus } from 'lucide-react';

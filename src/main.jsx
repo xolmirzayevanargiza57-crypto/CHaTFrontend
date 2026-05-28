@@ -4,11 +4,10 @@ import App from './App.jsx'
 import './index.css'
 import axios from 'axios'
 
-window.global = window;
-import { Buffer } from 'buffer';
-window.Buffer = Buffer;
-import process from 'process';
-window.process = process;
+// Fix for globals if needed by libraries
+if (typeof window !== 'undefined') {
+  window.global = window;
+}
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 axios.defaults.baseURL = apiUrl;
