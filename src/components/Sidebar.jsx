@@ -137,7 +137,7 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         </div>
       </div>
 
-      <SearchBar onFriendAdded={fetchFriends} />
+      <SearchBar onFriendAdded={() => { onFriendAdded(); fetchStories(); }} />
 
       <div className="stories-container">
         <div className="story-item min-add" onClick={() => document.getElementById('story-input').click()}>
