@@ -169,6 +169,9 @@ const Profile = () => {
       });
     } catch (err) {
       console.error(err);
+      if (err.response && err.response.status === 401) {
+        window.location.href = '/';
+      }
     }
   };
 
