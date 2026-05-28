@@ -1,15 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
-import { Send, ArrowLeft, MoreVertical, Video } from 'lucide-react';
+import { Send, ArrowLeft, MoreVertical, Video, Smile, X, Trash2, UserX } from 'lucide-react';
 
-const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMessages, onBack, isOnline, onStartCall }) => {
+// CHaT website's own sticker packs - iPhone/Telegram style
+const STICKER_PACKS = {
+  emoji: {
+    label: '😀',
+    title: 'Emoji',
+    stickers: [
+      '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😊',
+      '😇','🥰','😍','🤩','😘','😗','😋','😛','😜','🤪',
+      '😝','🤑','🤗','🤭','🫢','🤫','🤔','🫡','🤐','🤨',
+      '😐','😑','😶','🫥','😏','😒','🙄','😬','🤥','😌',
+      '😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥵',
+      '🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐',
+    ]
+  },
+  animals: {
+    label: '🐶',
+    title: 'Animals',
+    stickers: [
+      '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨',
+      '🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐒',
+      '🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇',
+      '🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞',
+      '🐜','🪰','🪲','🪳','🦟','🦗','🕷','🦂','🐢','🐍',
+      '🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠',
+    ]
+  },
+  love: {
+    label: '❤️',
+    title: 'Love',
+    stickers: [
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔',
+      '❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝',
+      '💟','☮️','✝️','☪️','🕉','☸️','✡️','🔯','🕎','☯️',
+      '💋','💌','💐','🌹','🥀','🌺','🌷','🌸','💮','🏵️',
+      '🫶','🫰','🤝','👫','👬','👭','💏','💑','👪','🫂',
+      '😍','🥰','😘','😻','💒','💍','🎀','🎁','🪷','✨',
+    ]
+  },
+  fun: {
+    label: '🎉',
+    title: 'Fun',
+    stickers: [
+      '🎉','🎊','🎈','🎂','🎁','🎃','🎄','🎋','🎍','🎎',
+      '🎏','🎐','🎑','🧨','✨','🎇','🎆','🎌','🏮','🪅',
+      '🪩','🪄','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁',
+      '🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','🎯','🎳',
+      '🎮','🕹️','🧩','🪀','🪁','🃏','🀄','🎴','🔮','🧿',
+      '💊','🧪','🎪','🎠','🎡','🎢','🛝','💎','👑','🎵',
+    ]
+  },
+  gestures: {
+    label: '👋',
+    title: 'Gestures',
+    stickers: [
+      '👋','🤚','🖐','✋','🖖','🫱','🫲','🫳','🫴','👌',
+      '🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉',
+      '👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛',
+      '🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💪',
+      '🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁',
+      '🦷','🦴','👀','👁','👅','👄','🫦','💅','🤳','💃',
+    ]
+  },
+  food: {
+    label: '🍕',
+    title: 'Food',
+    stickers: [
+      '🍕','🍔','🍟','🌭','🍿','🧂','🥨','🥯','🍞','🧇',
+      '🥞','🧈','🍳','🥚','🥓','🥩','🍗','🍖','🦴','🌮',
+      '🌯','🫔','🥙','🧆','🥗','🥘','🫕','🍝','🍜','🍲',
+      '🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥',
+      '🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰',
+      '🎂','🍮','🍭','🍬','🍫','🍩','🍪','🌰','🥜','🍯',
+    ]
+  }
+};
+
+const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearForMe, onClearChat, onDeleteMessages, onBack, isOnline, onStartCall }) => {
   const [text, setText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const [showClearSubmenu, setShowClearSubmenu] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState([]);
+  const [showStickers, setShowStickers] = useState(false);
+  const [activeStickerPack, setActiveStickerPack] = useState('emoji');
   const { user, lang } = useAuth();
   const t = translations[lang];
   const messagesEndRef = useRef(null);
+  const menuRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -22,14 +102,33 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
   useEffect(() => {
     setSelectedMessages([]);
     setShowMenu(false);
+    setShowClearSubmenu(false);
+    setShowStickers(false);
   }, [friend]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+        setShowClearSubmenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim()) {
-      onSendMessage(text);
+      onSendMessage(text, false);
       setText('');
     }
+  };
+
+  const handleSendSticker = (sticker) => {
+    onSendMessage(sticker, true);
+    setShowStickers(false);
   };
 
   const toggleMessageSelection = (msgId) => {
@@ -38,10 +137,19 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
     );
   };
 
-  const handleClear = () => {
-    if (window.confirm(t.confirmClear)) {
-      onClearChat();
+  const handleClearBoth = () => {
+    if (window.confirm(t.confirmClearBoth)) {
+      onClearForBoth();
       setShowMenu(false);
+      setShowClearSubmenu(false);
+    }
+  };
+
+  const handleClearMe = () => {
+    if (window.confirm(t.confirmClearForMe)) {
+      onClearForMe();
+      setShowMenu(false);
+      setShowClearSubmenu(false);
     }
   };
 
@@ -66,13 +174,21 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           <h1>{t.welcome}, {user.firstName}!</h1>
           <p>{t.noMessages}</p>
         </div>
+
+        <style jsx="true">{`
+          .chat-window { flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); height: 100vh; }
+          .chat-window.empty { justify-content: center; align-items: center; background: var(--bg-secondary); }
+          .welcome-content { text-align: center; color: var(--text-secondary); display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+          .welcome-logo { font-size: 4rem; font-weight: 900; color: var(--accent); opacity: 0.1; letter-spacing: -2px; }
+        `}</style>
       </div>
     );
   }
 
   return (
     <div className="chat-window">
-      <div className="chat-header glass">
+      {/* Header */}
+      <div className="chat-header">
         <button className="back-btn" onClick={onBack}>
           <ArrowLeft size={24} />
         </button>
@@ -90,21 +206,37 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
             <p className="status">{isOnline ? t.online : t.offline}</p>
           </div>
         </div>
-        <div className="header-actions">
+        <div className="header-actions" ref={menuRef}>
           <button className="icon-btn call-btn" onClick={onStartCall} title="Video Call">
             <Video size={22} />
           </button>
-          <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}>
+          <button className="icon-btn" onClick={() => { setShowMenu(!showMenu); setShowClearSubmenu(false); }}>
             <MoreVertical size={20} />
           </button>
           {showMenu && (
             <div className="dropdown-menu">
-              <button onClick={handleClear}>{t.clearChat}</button>
+              <button className="menu-item clear-item" onClick={() => setShowClearSubmenu(!showClearSubmenu)}>
+                <Trash2 size={16} />
+                <span>{t.clearChat}</span>
+              </button>
+              {showClearSubmenu && (
+                <div className="clear-submenu">
+                  <button className="submenu-item" onClick={handleClearBoth}>
+                    <UserX size={14} />
+                    <span>{t.clearForBoth}</span>
+                  </button>
+                  <button className="submenu-item" onClick={handleClearMe}>
+                    <Trash2 size={14} />
+                    <span>{t.clearForMe}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
+      {/* Messages */}
       <div className="messages-area">
         {messages.map((msg, index) => (
           <div 
@@ -125,6 +257,42 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Sticker Panel */}
+      {showStickers && (
+        <div className="sticker-panel">
+          <div className="sticker-panel-header">
+            <div className="sticker-tabs">
+              {Object.entries(STICKER_PACKS).map(([key, pack]) => (
+                <button
+                  key={key}
+                  className={`sticker-tab ${activeStickerPack === key ? 'active' : ''}`}
+                  onClick={() => setActiveStickerPack(key)}
+                  title={pack.title}
+                >
+                  {pack.label}
+                </button>
+              ))}
+            </div>
+            <button className="sticker-close" onClick={() => setShowStickers(false)}>
+              <X size={18} />
+            </button>
+          </div>
+          <div className="sticker-pack-title">{STICKER_PACKS[activeStickerPack].title}</div>
+          <div className="sticker-grid">
+            {STICKER_PACKS[activeStickerPack].stickers.map((sticker, i) => (
+              <button
+                key={i}
+                className="sticker-item"
+                onClick={() => handleSendSticker(sticker)}
+              >
+                {sticker}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Input / Selection Bar */}
       {selectedMessages.length > 0 ? (
         <div className="selection-bar">
           <span>{selectedMessages.length} {t.deleteSelected}</span>
@@ -135,11 +303,19 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
         </div>
       ) : (
         <form className="input-bar" onSubmit={handleSubmit}>
+          <button 
+            type="button" 
+            className={`sticker-toggle ${showStickers ? 'active' : ''}`}
+            onClick={() => setShowStickers(!showStickers)}
+          >
+            <Smile size={24} />
+          </button>
           <input 
             type="text" 
             placeholder={t.typeMessage} 
             value={text} 
-            onChange={(e) => setText(e.target.value)} 
+            onChange={(e) => setText(e.target.value)}
+            onFocus={() => setShowStickers(false)}
           />
           <button type="submit" disabled={!text.trim()} className="send-btn">
             <Send size={20} />
@@ -169,12 +345,14 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           gap: 1.5rem;
         }
         .welcome-logo {
-            font-size: 4rem;
-            font-weight: 900;
-            color: var(--accent);
-            opacity: 0.1;
-            letter-spacing: -2px;
+          font-size: 4rem;
+          font-weight: 900;
+          color: var(--accent);
+          opacity: 0.1;
+          letter-spacing: -2px;
         }
+
+        /* Header */
         .chat-header {
           padding: 0.85rem 1.5rem;
           display: flex;
@@ -206,39 +384,83 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           position: relative;
         }
         .call-btn {
-            color: var(--accent);
-            background: rgba(59, 130, 246, 0.08) !important;
+          color: var(--accent);
+          background: rgba(59, 130, 246, 0.08) !important;
         }
         .call-btn:hover {
-            background: var(--accent) !important;
-            color: white !important;
+          background: var(--accent) !important;
+          color: white !important;
         }
+
+        /* Dropdown menu with clear submenu */
         .dropdown-menu {
           position: absolute;
           top: 100%;
           right: 0;
           background: var(--bg-primary);
           border: 1px solid var(--border);
-          border-radius: 1.25rem;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-          padding: 0.5rem;
-          min-width: 180px;
+          border-radius: 16px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+          padding: 6px;
+          min-width: 220px;
           z-index: 100;
           margin-top: 0.5rem;
+          animation: menuFadeIn 0.15s ease;
         }
-        .dropdown-menu button {
+        @keyframes menuFadeIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .menu-item {
           width: 100%;
           text-align: left;
-          padding: 0.75rem 1rem;
+          padding: 10px 14px;
           background: transparent;
-          color: #ff3b30;
+          color: var(--text-primary);
           font-size: 0.95rem;
-          border-radius: 0.75rem;
-          font-weight: 600;
+          border-radius: 10px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
-        .dropdown-menu button:hover {
-          background: rgba(255, 59, 48, 0.05);
+        .menu-item:hover {
+          background: rgba(135,116,225,0.08);
         }
+        .clear-item {
+          color: #ff3b30;
+        }
+        .clear-item:hover {
+          background: rgba(255, 59, 48, 0.06);
+        }
+        .clear-submenu {
+          padding: 4px 0 0 0;
+          border-top: 1px solid var(--border);
+          margin-top: 4px;
+        }
+        .submenu-item {
+          width: 100%;
+          text-align: left;
+          padding: 10px 14px 10px 24px;
+          background: transparent;
+          font-size: 0.9rem;
+          border-radius: 10px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: var(--text-primary);
+        }
+        .submenu-item:first-child {
+          color: #ff3b30;
+        }
+        .submenu-item:last-child {
+          color: var(--accent);
+        }
+        .submenu-item:hover {
+          background: rgba(135,116,225,0.06);
+        }
+
         .status {
           font-size: 0.8rem;
           color: var(--text-secondary);
@@ -248,43 +470,51 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           height: 44px;
           background: linear-gradient(135deg, var(--accent), #60a5fa);
           color: white;
-          border-radius: 14px;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
           position: relative;
           overflow: hidden;
+          flex-shrink: 0;
         }
         .avatar.small img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
         .online-dot {
-            width: 12px;
-            height: 12px;
-            background: #34c759;
-            border: 2px solid var(--bg-primary);
-            border-radius: 50%;
-            position: absolute;
-            bottom: -1px;
-            right: -1px;
-            z-index: 2;
+          width: 12px;
+          height: 12px;
+          background: #34c759;
+          border: 2px solid var(--bg-primary);
+          border-radius: 50%;
+          position: absolute;
+          bottom: -1px;
+          right: -1px;
+          z-index: 2;
         }
+
+        /* Messages */
         .messages-area {
           flex: 1;
           overflow-y: auto;
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.5rem;
           background: var(--bg-secondary);
         }
         .message-wrapper {
           max-width: 70%;
           display: flex;
           flex-direction: column;
+          animation: msgSlide 0.2s ease;
+        }
+        @keyframes msgSlide {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .message-wrapper.sent {
           align-self: flex-end;
@@ -299,34 +529,46 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           outline-offset: 2px;
         }
         .message-bubble {
-          padding: 0.75rem 1rem;
-          border-radius: 1.25rem;
+          padding: 0.6rem 0.9rem;
+          border-radius: 18px;
           font-size: 0.95rem;
           line-height: 1.4;
           box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          word-break: break-word;
         }
         .sent .message-bubble {
           background: var(--message-out);
           color: var(--message-out-text);
-          border-bottom-right-radius: 0.25rem;
+          border-bottom-right-radius: 4px;
         }
         .received .message-bubble {
           background: var(--message-in);
           color: var(--message-in-text);
-          border-bottom-left-radius: 0.25rem;
+          border-bottom-left-radius: 4px;
         }
         .message-bubble.sticker {
-            background: transparent !important;
-            box-shadow: none !important;
-            padding: 0;
-            font-size: 3rem;
+          background: transparent !important;
+          box-shadow: none !important;
+          padding: 0;
+          font-size: 3.5rem;
+          line-height: 1.1;
+        }
+        .sticker-content {
+          display: block;
+          transition: transform 0.15s;
+          cursor: default;
+        }
+        .sticker-content:hover {
+          transform: scale(1.15);
         }
         .message-time {
           font-size: 0.7rem;
           color: var(--text-secondary);
-          margin-top: 0.25rem;
+          margin-top: 2px;
           padding: 0 0.5rem;
         }
+
+        /* Selection bar */
         .selection-bar {
           padding: 1rem 1.5rem;
           display: flex;
@@ -354,41 +596,160 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
           background: #ef4444;
           color: white;
         }
+
+        /* Input bar */
         .input-bar {
-          padding: 1.25rem 1.5rem;
+          padding: 0.75rem 1rem;
           display: flex;
-          gap: 1rem;
+          gap: 0.5rem;
           background: var(--bg-primary);
           border-top: 1px solid var(--border);
+          align-items: center;
+        }
+        .sticker-toggle {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+          background: transparent;
+          flex-shrink: 0;
+          transition: all 0.2s;
+        }
+        .sticker-toggle:hover,
+        .sticker-toggle.active {
+          color: var(--accent);
+          background: rgba(135,116,225,0.1);
         }
         .input-bar input {
           flex: 1;
-          padding: 0.875rem 1.25rem;
-          border-radius: 1rem;
+          padding: 0.75rem 1rem;
+          border-radius: 22px;
           border: 1px solid var(--border);
           background: var(--bg-secondary);
           color: var(--text-primary);
           outline: none;
           font-size: 0.95rem;
         }
+        .input-bar input:focus {
+          border-color: var(--accent);
+        }
         .send-btn {
           background: var(--accent);
           color: white;
-          width: 48px;
-          height: 48px;
-          border-radius: 1rem;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: transform 0.2s;
+          transition: all 0.2s;
+          flex-shrink: 0;
         }
         .send-btn:hover:not(:disabled) {
           background: var(--accent-hover);
-          transform: scale(1.05);
+          transform: scale(1.08);
         }
         .send-btn:disabled {
-          opacity: 0.5;
+          opacity: 0.4;
           cursor: not-allowed;
+        }
+
+        /* Sticker Panel - Telegram style */
+        .sticker-panel {
+          background: var(--bg-primary);
+          border-top: 1px solid var(--border);
+          max-height: 320px;
+          display: flex;
+          flex-direction: column;
+          animation: stickerSlideUp 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes stickerSlideUp {
+          from { max-height: 0; opacity: 0; }
+          to { max-height: 320px; opacity: 1; }
+        }
+        .sticker-panel-header {
+          display: flex;
+          align-items: center;
+          padding: 8px 12px;
+          border-bottom: 1px solid var(--border);
+          gap: 4px;
+        }
+        .sticker-tabs {
+          display: flex;
+          gap: 2px;
+          flex: 1;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .sticker-tabs::-webkit-scrollbar { display: none; }
+        .sticker-tab {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.3rem;
+          background: transparent;
+          transition: all 0.15s;
+          flex-shrink: 0;
+        }
+        .sticker-tab:hover {
+          background: rgba(135,116,225,0.08);
+        }
+        .sticker-tab.active {
+          background: var(--accent);
+          border-radius: 12px;
+          transform: scale(1.05);
+        }
+        .sticker-close {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-secondary);
+          background: transparent;
+          flex-shrink: 0;
+        }
+        .sticker-close:hover {
+          background: rgba(255,59,48,0.08);
+          color: #ff3b30;
+        }
+        .sticker-pack-title {
+          padding: 6px 16px;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .sticker-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+          gap: 2px;
+          padding: 4px 8px 12px;
+          overflow-y: auto;
+          flex: 1;
+        }
+        .sticker-item {
+          aspect-ratio: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.8rem;
+          border-radius: 10px;
+          background: transparent;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .sticker-item:hover {
+          background: rgba(135,116,225,0.1);
+          transform: scale(1.2);
         }
 
         @keyframes slideUp {
@@ -407,28 +768,44 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearChat, onDeleteMess
             border-radius: 12px;
           }
           .chat-window {
-              display: ${friend ? 'flex' : 'none'};
-              position: fixed;
-              left: 0;
-              top: 0;
-              width: 100%;
-              height: 100%;
-              z-index: 2000;
-              background: var(--bg-primary);
+            display: ${friend ? 'flex' : 'none'};
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            background: var(--bg-primary);
           }
           .chat-header {
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 0.75rem;
           }
           .messages-area {
-            padding: 1rem;
+            padding: 0.75rem;
           }
           .input-bar {
-            padding: 0.75rem 1rem;
-            padding-bottom: env(safe-area-inset-bottom, 0.75rem);
+            padding: 0.5rem 0.75rem;
+            padding-bottom: env(safe-area-inset-bottom, 0.5rem);
           }
           .send-btn {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
+          }
+          .sticker-toggle {
+            width: 40px;
+            height: 40px;
+          }
+          .sticker-panel {
+            max-height: 260px;
+          }
+          .sticker-grid {
+            grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+          }
+          .sticker-item {
+            font-size: 1.5rem;
+          }
+          .dropdown-menu {
+            min-width: 200px;
           }
         }
       `}</style>

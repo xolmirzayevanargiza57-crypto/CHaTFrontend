@@ -67,7 +67,6 @@ const Chat = () => {
              if (exists) {
                  return prev.map(f => f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f);
              }
-             // If not in list, we'll wait for newFriend event or refresh
              return prev;
          });
       }
@@ -130,15 +129,36 @@ const Chat = () => {
     }
   };
 
-  const handleSendMessage = async (text) => {
+  const handleSendMessage = async (text, isSticker = false) => {
     try {
-      const response = await axios.post(`/api/messages/${selectedFriend._id}`, { text });
+      const response = await axios.post(`/api/messages/${selectedFriend._id}`, { text, isSticker });
       setMessages([...messages, response.data]);
     } catch (err) {
       console.error(err);
     }
   };
 
+  // Clear chat for BOTH sides
+  const handleClearForBoth = async () => {
+    try {
+      await axios.delete(`/api/messages/clear-both/${selectedFriend._id}`);
+      setMessages([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Clear chat only for ME
+  const handleClearForMe = async () => {
+    try {
+      await axios.delete(`/api/messages/clear-for-me/${selectedFriend._id}`);
+      setMessages([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Legacy clear (kept for backward compat)
   const handleClearChat = async () => {
     try {
       await axios.delete(`/api/messages/clear/${selectedFriend._id}`);
@@ -190,6 +210,8 @@ const Chat = () => {
         messages={messages}
         isOnline={selectedFriend && onlineUsers.includes(selectedFriend._id)}
         onSendMessage={handleSendMessage}
+        onClearForBoth={handleClearForBoth}
+        onClearForMe={handleClearForMe}
         onClearChat={handleClearChat}
         onDeleteMessages={handleDeleteMessages}
         onBack={() => setSelectedFriend(null)}
