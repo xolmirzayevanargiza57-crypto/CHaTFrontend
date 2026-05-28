@@ -57,7 +57,7 @@ const Create = () => {
                 <div className="media-preview-box" onClick={() => !file && fileInputRef.current.click()}>
                     {preview ? (
                         <div className="preview-container">
-                            {file.type.startsWith('video/') ? <video src={preview} controls /> : <img src={preview} alt="v" />}
+                            {file.type.startsWith('video/') ? <video src={preview} controls className="v-contain" /> : <img src={preview} alt="v" />}
                             <button className="remove-media" onClick={(e) => { e.stopPropagation(); setPreview(null); setFile(null); }}><X size={20} /></button>
                         </div>
                     ) : (
@@ -100,8 +100,9 @@ const Create = () => {
 
                 .create-content { padding: 0; }
                 .media-preview-box { width: 100%; aspect-ratio: 1; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
-                .preview-container { width: 100%; height: 100%; position: relative; }
-                .preview-container img, .preview-container video { width: 100%; height: 100%; object-fit: cover; }
+                .preview-container { width: 100%; height: 100%; position: relative; background: #000; }
+                .v-contain { width: 100%; height: 100%; object-fit: contain !important; }
+                .preview-container img { width: 100%; height: 100%; object-fit: cover; }
                 .remove-media { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; padding: 8px; }
                 
                 .select-placeholder { text-align: center; color: var(--text-secondary); }

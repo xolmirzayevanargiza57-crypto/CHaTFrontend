@@ -6,6 +6,8 @@ import Auth from './pages/Auth';
 import Chat from './pages/Chat';
 import Home from './pages/Home';
 import Create from './pages/Create';
+import Reels from './pages/Reels';
+import SearchPage from './pages/Search';
 import Archive from './pages/Archive';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
@@ -23,7 +25,8 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={token ? <Home /> : <Auth />} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-        <Route path="/reels" element={<ProtectedRoute><Home /></ProtectedRoute>} /> { /* Temp use Home for reels */ }
+        <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
+        <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
         <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
         <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
