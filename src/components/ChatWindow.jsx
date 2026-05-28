@@ -338,23 +338,31 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
 
       {preview && (
         <div className="preview-float fade-in">
-          <button className="close-preview" onClick={() => { setPreview(null); setCaptionText(''); }}><X size={18} /></button>
+          <div className="preview-header">
+            <h3>{t.preview}</h3>
+            <button className="close-preview" onClick={() => { setPreview(null); setCaptionText(''); }}><X size={18} /></button>
+          </div>
           <div className="preview-content">
             {preview.type === 'image' ? (
-              <img src={preview.url} />
+              <img src={preview.url} alt="p" />
             ) : preview.type === 'video' ? (
-              <video src={preview.url} controls style={{maxWidth: '200px', borderRadius: '12px'}} />
+              <video src={preview.url} controls />
             ) : (
               <div className="file-box"><Music size={24} /> {preview.name}</div>
             )}
             {(preview.type === 'image' || preview.type === 'video') && (
-              <input 
-                type="text" 
-                className="caption-input"
-                placeholder={t.sendAsCaption}
-                value={captionText}
-                onChange={(e) => setCaptionText(e.target.value)}
-              />
+              <div className="caption-row">
+                <input 
+                  type="text" 
+                  className="caption-input"
+                  placeholder={t.sendAsCaption}
+                  value={captionText}
+                  onChange={(e) => setCaptionText(e.target.value)}
+                />
+                <button className="preview-send-btn" onClick={() => uploadAndSend()} disabled={uploading}>
+                  {uploading ? <div className="tg-spinner xsmall"></div> : <Send size={20} />}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -556,13 +564,17 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
         .gif-item:hover { transform: scale(1.03); }
         .gif-item img { width: 100%; height: 100%; object-fit: cover; }
         
-        .preview-float { position: absolute; bottom: 80px; left: 16px; right: 16px; max-width: 350px; background: var(--bg-primary); padding: 14px; border-radius: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); border: 1px solid var(--border); z-index: 150; }
-        .preview-content { display: flex; flex-direction: column; gap: 10px; }
-        .preview-float img { width: 100%; max-height: 200px; border-radius: 12px; object-fit: cover; }
-        .close-preview { position: absolute; top: -8px; right: -8px; background: #ff3b30; color: white; border-radius: 50%; padding: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
-        .caption-input { padding: 10px 14px; border-radius: 12px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9rem; border: 1px solid var(--border) !important; }
-        .caption-input:focus { border-color: var(--accent) !important; }
-        .file-box { display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 12px; font-size: 0.9rem; }
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .preview-header h3 { font-size: 1.1rem; font-weight: 800; margin: 0; }
+        .preview-float { position: absolute; bottom: 90px; left: 16px; right: 16px; max-width: 400px; background: var(--bg-primary); padding: 20px; border-radius: 24px; box-shadow: 0 15px 50px rgba(0,0,0,0.2); border: 1px solid var(--border); z-index: 150; }
+        .preview-content { display: flex; flex-direction: column; gap: 15px; }
+        .preview-float img, .preview-float video { width: 100%; max-height: 300px; border-radius: 16px; object-fit: contain; background: #000; }
+        .close-preview { background: rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 50%; padding: 6px; }
+        .caption-row { display: flex; gap: 10px; align-items: center; }
+        .caption-input { flex: 1; padding: 12px 16px; border-radius: 14px; background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; border: 1px solid var(--border) !important; }
+        .preview-send-btn { width: 48px; height: 48px; border-radius: 16px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(135,116,225,0.3); }
+        .preview-send-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .tg-spinner.xsmall { width: 18px; height: 18px; border-width: 2px; }
 
         .input-area { padding: 12px 16px; background: var(--bg-primary); border-top: 1px solid var(--border); }
         .input-form { display: flex; align-items: center; gap: 10px; }
@@ -585,7 +597,8 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
           .chat-window { position: fixed; inset: 0; z-index: 2000; display: ${friend ? 'flex' : 'none'}; }
           .back-btn { display: flex; }
           .input-area { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
-          .media-panel { bottom: 90px; left: 8px; right: 8px; }
+          .media-panel { bottom: 90px; left: 8px; right: 8px; width: auto; max-width: none; }
+          .preview-float { bottom: 90px; left: 8px; right: 8px; max-width: none; }
         }
       `}</style>
     </div>

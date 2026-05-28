@@ -60,6 +60,8 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
     startStoryTimer(group, idx);
   };
 
+  const [isMuted, setIsMuted] = useState(true);
+
   const startStoryTimer = (group, idx, duration = 5000) => {
     clearTimeout(storyTimerRef.current);
     storyTimerRef.current = setTimeout(() => {
@@ -102,7 +104,8 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
     }
   };
 
-  const handleLikeStory = async (storyId) => {
+  const handleLikeStory = async (e, storyId) => {
+    e.stopPropagation();
     try {
       await axios.post(`/api/stories/${storyId}/like`);
       fetchStories();
@@ -207,12 +210,26 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
                   <p className="story-time">{new Date(currentStory.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
                 </div>
               </div>
-              <button className="story-close" onClick={closeStoryViewer}><X size={24} /></button>
+              <div className="header-story-actions">
+                 {currentStory.fileType === 'video' && (
+                    <button className="story-audio-toggle" onClick={() => setIsMuted(!isMuted)}>
+                      {isMuted ? <Music size={20} /> : <StopCircle size={20} />}
+                    </button>
+                 )}
+                 <button className="story-close" onClick={closeStoryViewer}><X size={24} /></button>
+              </div>
             </div>
             
             <div className="story-media">
               {currentStory.fileType === 'video' ? (
-                <video src={currentStory.fileUrl} autoPlay muted playsInline onLoadedMetadata={handleVideoLoad} className="story-img" />
+                <video 
+                  src={currentStory.fileUrl} 
+                  autoPlay 
+                  muted={isMuted} 
+                  playsInline 
+                  onLoadedMetadata={handleVideoLoad} 
+                  className="story-img" 
+                />
               ) : (
                 <img src={currentStory.fileUrl} alt="story" className="story-img" />
               )}
@@ -232,8 +249,8 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
             <div className="story-footer">
               <div className="story-stats">
                 <div className="story-stat"><Eye size={16} /> {currentStory.viewsCount}</div>
-                <button className="story-stat like-btn" onClick={() => handleLikeStory(currentStory._id)}>
-                  <Heart size={16} fill={currentStory.hasLiked ? '#ff3b5c' : 'none'} color={currentStory.hasLiked ? '#ff3b5c' : 'white'} /> 
+                <button className="story-stat like-btn" onClick={(e) => handleLikeStory(e, currentStory._id)}>
+                  <Heart size={18} fill={currentStory.hasLiked ? '#ff3b5c' : 'none'} color={currentStory.hasLiked ? '#ff3b5c' : 'white'} /> 
                   {currentStory.likesCount}
                 </button>
               </div>
@@ -337,6 +354,10 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         .story-user-avatar { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; border: 2px solid white; }
         .story-user-name { color: white; font-weight: 700; font-size: 1rem; }
         .story-time { color: rgba(255,255,255,0.7); font-size: 0.8rem; }
+        
+        .header-story-actions { display: flex; align-items: center; gap: 10px; }
+        .story-audio-toggle { background: rgba(0,0,0,0.3); color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .story-audio-toggle:hover { background: rgba(135,116,225,0.5); }
         .story-close { color: white; padding: 8px; cursor: pointer; border-radius: 50%; transition: 0.2s; }
         .story-close:hover { background: rgba(255,255,255,0.1); }
         
@@ -344,7 +365,7 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         .story-img { 
           max-width: 100%; 
           max-height: 100%; 
-          object-fit: contain !important; /* Ensure video fits the screen */
+          object-fit: contain !important; 
         }
         
         .story-nav-btn { 
@@ -389,7 +410,8 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
           z-index: 30; 
         }
         .story-stat { display: flex; align-items: center; gap: 8px; color: white; font-weight: 700; font-size: 0.95rem; }
-        .like-btn { cursor: pointer; background: none; border: none; }
+        .like-btn { cursor: pointer; background: none; border: none; transition: 0.2s; }
+        .like-btn:hover { transform: scale(1.1); }
 
         @media (max-width: 768px) {
           .sidebar { 
