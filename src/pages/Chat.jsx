@@ -67,10 +67,15 @@ const Chat = () => {
       setOnlineUsers((prev) => prev.filter(id => id !== userId));
     });
 
-    socket.on('callUser', ({ from, signal }) => {
+    socket.on('callUser', ({ from, signal, name, avatar }) => {
         setFriends(prev => {
             const caller = prev.find(f => f._id === from);
-            setCall({ isReceiving: true, from: caller || { _id: from, firstName: 'User' }, signal, active: true });
+            setCall({ 
+              isReceiving: true, 
+              from: caller || { _id: from, firstName: name || 'Foydalanuvchi', lastName: '', avatar: avatar || '' }, 
+              signal, 
+              active: true 
+            });
             return prev;
         });
     });

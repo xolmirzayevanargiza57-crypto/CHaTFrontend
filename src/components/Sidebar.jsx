@@ -245,10 +245,20 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
             left: 0;
             top: 0;
             display: ${selectedFriend ? 'none' : 'flex'};
-            padding-bottom: 65px;
+            padding-bottom: 70px;
           }
           .logo {
             font-size: 1.8rem;
+          }
+          .sidebar-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 0.75rem 1.5rem 1.25rem;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
           }
         }
       `}</style>
