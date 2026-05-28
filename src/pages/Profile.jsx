@@ -350,22 +350,23 @@ const Profile = () => {
         .tg-profile {
           width: 100%;
           min-height: 100vh;
-          max-width: 100%;
           background: var(--bg-primary);
-          padding-bottom: 100px;
+          padding-bottom: 151px;
+          display: flex;
+          flex-direction: column;
           overflow-x: hidden;
-          overflow-y: auto;
         }
         .tg-header {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 16px 24px;
+          gap: 16px;
+          padding: 12px 16px;
           position: sticky;
           top: 0;
           background: var(--bg-primary);
           border-bottom: 1px solid var(--border);
-          z-index: 10;
+          z-index: 100;
+          height: 60px;
         }
         .tg-header h1 {
           font-size: 20px;
@@ -373,274 +374,94 @@ const Profile = () => {
           flex: 1;
         }
         .tg-back {
-          width: 36px;
-          height: 36px;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: 50%;
           color: var(--accent);
         }
-        .tg-back:hover { background: rgba(135,116,225,0.1); }
-        .tg-edit-icon {
-          width: 36px;
-          height: 36px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          color: var(--accent);
-        }
-        .tg-edit-icon:hover { background: rgba(135,116,225,0.1); }
 
         .tg-profile-hero {
-          text-align: center;
-          padding: 32px 24px 24px;
+          width: 100%;
+          padding: 40px 16px;
+          background: var(--bg-primary);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
         }
         .tg-avatar-big {
-          width: 120px;
-          height: 120px;
+          width: 124px;
+          height: 124px;
           border-radius: 50%;
           background: var(--accent);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 40px;
-          font-weight: 800;
-          margin: 0 auto 16px;
-          overflow: hidden;
           position: relative;
-          box-shadow: 0 8px 24px rgba(135,116,225,0.3);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
         .tg-avatar-big img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-        }
-        .tg-avatar-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          cursor: pointer;
-          opacity: 0;
-          transition: opacity 0.2s;
-        }
-        .tg-avatar-big:hover .tg-avatar-overlay {
-          opacity: 1;
-        }
-        .tg-profile-hero h2 {
-          font-size: 22px;
-          font-weight: 700;
-          margin-bottom: 4px;
-        }
-        .tg-username {
-          color: var(--text-secondary);
-          font-size: 15px;
+          border-radius: 50%;
         }
 
-        /* Category tabs */
-        .tg-cat-tabs {
-          display: flex;
-          gap: 8px;
-          padding: 8px 24px 12px;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-        }
-        .tg-cat-tabs::-webkit-scrollbar { display: none; }
-        .tg-cat-tab {
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-size: 13px;
-          font-weight: 600;
-          white-space: nowrap;
-          background: var(--bg-secondary);
-          color: var(--text-secondary);
-          border: 1px solid var(--border);
-          transition: all 0.2s;
-        }
-        .tg-cat-tab.active {
-          background: var(--accent);
-          color: white;
-          border-color: var(--accent);
-        }
-        .tg-cat-tab:hover:not(.active) {
-          background: rgba(135,116,225,0.1);
-        }
-
-        /* URL input */
-        .tg-url-section {
-          padding: 0 24px 12px;
-        }
-        .tg-url-toggle {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 16px;
-          border-radius: 12px;
-          background: var(--bg-secondary);
-          color: var(--text-secondary);
-          font-size: 14px;
-          font-weight: 500;
+        /* Forms stretching */
+        .tg-edit-section {
           width: 100%;
-          border: 1px solid var(--border);
-          transition: all 0.2s;
         }
-        .tg-url-toggle.active {
-          color: var(--accent);
-          border-color: var(--accent);
-        }
-        .tg-url-input-row {
-          display: flex;
-          gap: 8px;
-          margin-top: 8px;
-        }
-        .tg-url-input-row input {
-          flex: 1;
-          padding: 12px 16px;
-          border-radius: 12px;
-          border: 1px solid var(--border);
+        .tg-input-group {
+          width: 100%;
+          padding: 12px 18px;
           background: var(--bg-secondary);
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .tg-input-group:first-of-type { border-top: 1px solid var(--border); }
+        .tg-input-group label {
+          font-size: 13px;
+          color: var(--accent);
+          font-weight: 500;
+        }
+        .tg-input-group input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          padding: 4px 0;
+          font-size: 17px;
           color: var(--text-primary);
-          font-size: 14px;
           outline: none;
         }
-        .tg-url-input-row input:focus {
-          border-color: var(--accent);
-        }
-        .tg-url-btn {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-          background: var(--accent);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
 
-        /* Avatar grid */
         .tg-section-label {
-          padding: 14px 24px 8px;
+          padding: 24px 18px 8px;
           font-size: 14px;
           font-weight: 600;
           color: var(--accent);
           text-transform: uppercase;
-          letter-spacing: 0.5px;
         }
+
         .tg-avatar-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-          gap: 12px;
-          padding: 10px 24px 24px;
-          width: 100%;
+          grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+          gap: 10px;
+          padding: 8px 16px 24px;
+          background: var(--bg-primary);
         }
         .tg-avatar-item {
-          width: 100%;
           aspect-ratio: 1;
           border-radius: 50%;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
           border: 3px solid transparent;
-          transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+          overflow: hidden;
           background: var(--bg-secondary);
         }
-        .tg-avatar-item:hover {
-          transform: scale(1.08);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        }
-        .tg-avatar-item img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: 50%;
-        }
-        .tg-avatar-item.selected {
-          border-color: var(--accent);
-          box-shadow: 0 0 0 3px rgba(135,116,225,0.3);
-          transform: scale(1.05);
-        }
-        .tg-initials {
-          font-weight: 700;
-          font-size: 20px;
-          color: var(--accent);
-        }
+        .tg-avatar-item.selected { border-color: var(--accent); }
 
-        /* Edit form */
-        .tg-edit-section {
-          padding: 0;
-          width: 100%;
-        }
-        .tg-input-group {
-          padding: 0 24px;
-          margin-bottom: 16px;
-        }
-        .tg-input-group label {
-          display: block;
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--accent);
-          margin-bottom: 6px;
-        }
-        .tg-input-group input {
-          width: 100%;
-          padding: 14px 16px;
-          border-radius: 12px;
-          border: 1px solid var(--border);
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-          font-size: 16px;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        .tg-input-group input:focus {
-          border-color: var(--accent);
-        }
-        .tg-edit-actions {
-          display: flex;
-          gap: 12px;
-          padding: 12px 24px 24px;
-        }
-        .tg-btn-save, .tg-btn-cancel {
-          flex: 1;
-          padding: 14px;
-          border-radius: 12px;
-          font-size: 15px;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          transition: all 0.2s;
-        }
-        .tg-btn-save {
-          background: var(--accent);
-          color: white;
-        }
-        .tg-btn-save:hover {
-          background: var(--accent-hover);
-          transform: translateY(-1px);
-        }
-        .tg-btn-cancel {
-          background: var(--bg-secondary);
-          color: var(--text-secondary);
-        }
-
-        /* Info list */
-        .tg-info-section {
-          padding: 0;
-          width: 100%;
-        }
         .tg-list {
+          width: 100%;
           background: var(--bg-secondary);
           border-top: 1px solid var(--border);
           border-bottom: 1px solid var(--border);
@@ -648,54 +469,30 @@ const Profile = () => {
         .tg-list-item {
           display: flex;
           align-items: center;
-          gap: 14px;
-          padding: 14px 24px;
+          gap: 16px;
+          padding: 14px 18px;
           border-bottom: 1px solid var(--border);
         }
         .tg-list-item:last-child { border-bottom: none; }
-        .tg-icon { color: var(--accent); flex-shrink: 0; }
-        .tg-item-label {
-          font-size: 13px;
-          color: var(--text-secondary);
+
+        .tg-edit-actions {
+          padding: 24px 16px;
+          display: flex;
+          gap: 12px;
         }
-        .tg-item-value {
+        .tg-btn-save, .tg-btn-cancel {
+          flex: 1;
+          height: 52px;
+          border-radius: 12px;
           font-size: 16px;
           font-weight: 600;
-        }
-        .tg-loading {
           display: flex;
-          justify-content: center;
           align-items: center;
-          height: 100vh;
-          color: var(--text-secondary);
+          justify-content: center;
+          gap: 8px;
         }
-        .tg-loading-spinner {
-          width: 36px;
-          height: 36px;
-          border: 3px solid var(--border);
-          border-top-color: var(--accent);
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @media (max-width: 768px) {
-          .tg-profile { padding-bottom: 80px; }
-          .tg-header { padding: 14px 16px; }
-          .tg-profile-hero { padding: 24px 16px 20px; }
-          .tg-avatar-grid {
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 10px;
-            padding: 10px 16px 20px;
-          }
-          .tg-cat-tabs { padding: 8px 16px 12px; }
-          .tg-input-group { padding: 0 16px; }
-          .tg-edit-actions { padding: 12px 16px 20px; }
-          .tg-section-label { padding: 14px 16px 8px; }
-          .tg-list-item { padding: 14px 16px; }
-          .tg-url-section { padding: 0 16px 12px; }
-        }
+        .tg-btn-save { background: var(--accent); color: white; }
+        .tg-btn-cancel { background: var(--bg-secondary); color: var(--text-secondary); }
       `}</style>
     </div>
   );

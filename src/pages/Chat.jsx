@@ -22,20 +22,42 @@ const Chat = () => {
     try {
       const response = await axios.get('/api/users/friends');
       setFriends(response.data.map(f => ({ ...f, unreadCount: 0 })));
+      // Do'stlar ro'yxatini tezroq ko'rsatish uchun local storagega saqlab qo'yish mumkin
+      localStorage.setItem('friends_cache', JSON.stringify(response.data));
     } catch (err) {
       console.error(err);
     }
   }, []);
 
   useEffect(() => {
+    // Cache'dan darhol yuklash
+    const cache = localStorage.getItem('friends_cache');
+    if (cache) {
+      setFriends(JSON.parse(cache).map(f => ({ ...f, unreadCount: 0 })));
+    }
+    
     fetchFriends();
     
     if (!socket) {
-      const socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
-      socket = io(socketUrl);
+      let socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
+      socketUrl = socketUrl.replace('/api', '');
+      
+      socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000
+      });
     }
 
-    socket.emit('join', user.id);
+    socket.on('connect', () => {
+      console.log('✅ Socket connected:', socket.id);
+      socket.emit('join', user.id);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('❌ Socket connection error:', err);
+    });
 
     socket.on('userOnline', (userId) => {
       setOnlineUsers((prev) => Array.from(new Set([...prev, userId])));

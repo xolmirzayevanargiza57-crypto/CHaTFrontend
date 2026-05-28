@@ -79,22 +79,22 @@ const Settings = () => {
         .tg-settings {
           width: 100%;
           min-height: 100vh;
-          max-width: 100%;
           background: var(--bg-primary);
           padding-bottom: 100px;
-          overflow-x: hidden;
-          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
         }
         .tg-header {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 16px 24px;
+          padding: 16px 20px;
           position: sticky;
           top: 0;
           background: var(--bg-primary);
           border-bottom: 1px solid var(--border);
           z-index: 10;
+          width: 100%;
         }
         .tg-header h1 {
           font-size: 20px;
@@ -102,43 +102,42 @@ const Settings = () => {
           flex: 1;
         }
         .tg-back {
-          width: 36px;
-          height: 36px;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: 50%;
           color: var(--accent);
+          transition: background 0.2s;
         }
-        .tg-back:hover {
-          background: rgba(135,116,225,0.1);
-        }
+        .tg-back:hover { background: rgba(135,116,225,0.1); }
+
         .tg-section {
-          padding: 0;
           width: 100%;
+          background: var(--bg-primary);
         }
         .tg-section-label {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 14px 24px 8px;
+          padding: 16px 20px 8px;
           font-size: 14px;
           font-weight: 600;
           color: var(--accent);
           text-transform: uppercase;
-          letter-spacing: 0.5px;
         }
         .tg-list {
+          width: 100%;
           background: var(--bg-secondary);
           border-top: 1px solid var(--border);
           border-bottom: 1px solid var(--border);
-          width: 100%;
         }
         .tg-list-item {
           display: flex;
           align-items: center;
-          gap: 14px;
-          padding: 14px 24px;
+          gap: 16px;
+          padding: 16px 20px;
           cursor: pointer;
           border-bottom: 1px solid var(--border);
           transition: background 0.15s;
@@ -153,70 +152,43 @@ const Settings = () => {
         .tg-list-item.active {
           background: rgba(135,116,225,0.08);
         }
+        
         .tg-flag {
-          width: 28px;
-          height: 20px;
-          border-radius: 3px;
+          width: 32px;
+          height: 22px;
+          border-radius: 4px;
           object-fit: cover;
-          flex-shrink: 0;
-        }
-        .tg-theme-icon {
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--accent);
-          flex-shrink: 0;
         }
         .tg-list-text {
           flex: 1;
-          font-size: 16px;
+          font-size: 17px;
           font-weight: 500;
           color: var(--text-primary);
         }
-        .tg-check {
-          color: var(--accent);
-          flex-shrink: 0;
-        }
-        .tg-version {
-          color: var(--text-secondary);
-          font-size: 14px;
-          font-weight: 500;
-        }
+        
         .tg-toggle {
-          width: 50px;
-          height: 28px;
+          width: 52px;
+          height: 30px;
           background: #ccc;
           border-radius: 100px;
           position: relative;
-          transition: background 0.3s;
-          flex-shrink: 0;
+          transition: 0.3s;
         }
-        .tg-toggle.on {
-          background: var(--accent);
-        }
+        .tg-toggle.on { background: var(--accent); }
         .tg-toggle-thumb {
-          width: 24px;
-          height: 24px;
+          width: 26px;
+          height: 26px;
           background: white;
           border-radius: 50%;
           position: absolute;
           top: 2px;
           left: 2px;
-          transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
-          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+          transition: 0.3s;
         }
-        .tg-toggle.on .tg-toggle-thumb {
-          left: 24px;
-        }
+        .tg-toggle.on .tg-toggle-thumb { left: 24px; }
+
         @media (max-width: 768px) {
-          .tg-settings {
-            padding-bottom: 80px;
-          }
-          .tg-header { padding: 14px 16px; }
-          .tg-section-label { padding: 14px 16px 8px; }
-          .tg-list-item { padding: 14px 16px; }
+          .tg-settings { padding-bottom: 70px; }
         }
       `}</style>
     </div>
