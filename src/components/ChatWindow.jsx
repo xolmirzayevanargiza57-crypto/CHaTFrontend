@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import { Send, ArrowLeft, MoreVertical, Video, Smile, X, Trash2, UserX } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // CHaT website's own sticker packs - iPhone/Telegram style
 const STICKER_PACKS = {
@@ -87,6 +88,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
   const [showStickers, setShowStickers] = useState(false);
   const [activeStickerPack, setActiveStickerPack] = useState('emoji');
   const { user, lang } = useAuth();
+  const navigate = useNavigate();
   const t = translations[lang];
   const messagesEndRef = useRef(null);
   const menuRef = useRef(null);
@@ -192,7 +194,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
         <button className="back-btn" onClick={onBack}>
           <ArrowLeft size={24} />
         </button>
-        <div className="friend-profile">
+        <div className="friend-profile" onClick={() => navigate(`/profile/${friend._id}`)} style={{ cursor: 'pointer' }}>
           <div className="avatar small">
             {friend.avatar ? (
                 <img src={friend.avatar} alt="avatar" />
