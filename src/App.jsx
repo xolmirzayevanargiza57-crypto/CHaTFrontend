@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Auth from './pages/Auth';
 import Chat from './pages/Chat';
+import Home from './pages/Home';
+import Create from './pages/Create';
+import Archive from './pages/Archive';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 
@@ -18,8 +21,11 @@ const AppContent = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={!token ? <Auth /> : <Navigate to="/chat" />} />
+        <Route path="/" element={token ? <Home /> : <Auth />} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/reels" element={<ProtectedRoute><Home /></ProtectedRoute>} /> { /* Temp use Home for reels */ }
+        <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
+        <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

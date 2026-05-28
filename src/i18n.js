@@ -72,7 +72,14 @@ export const translations = {
     friendAdded: "Do'st qo'shildi!",
     searchMessages: "Xabarlardan qidirish...",
     today: "Bugun",
-    yesterday: "Kecha"
+    yesterday: "Kecha",
+    posts: "Postlar",
+    followers: "Obunachilar",
+    following: "Obuna bo'lingan",
+    follow: "Kuzatish",
+    unfollow: "Kuzatishni to'xtatish",
+    viewArchive: "Arxivni ko'rish",
+    noPostsYet: "Hali postlar yo'q"
   },
   ru: {
     login: "Вход",
@@ -147,7 +154,14 @@ export const translations = {
     friendAdded: "Друг добавлен!",
     searchMessages: "Поиск в сообщениях...",
     today: "Сегодня",
-    yesterday: "Вчера"
+    yesterday: "Вчера",
+    posts: "Посты",
+    followers: "Подписчики",
+    following: "Подписки",
+    follow: "Подписаться",
+    unfollow: "Отписаться",
+    viewArchive: "Просмотреть архив",
+    noPostsYet: "Постов пока нет"
   },
   en: {
     login: "Login",
@@ -222,6 +236,13 @@ export const translations = {
     friendAdded: "Friend added!",
     searchMessages: "Search messages...",
     today: "Today",
-    yesterday: "Yesterday"
+    yesterday: "Yesterday",
+    posts: "Posts",
+    followers: "Followers",
+    following: "Following",
+    follow: "Follow",
+    unfollow: "Unfollow",
+    viewArchive: "View Archive",
+    noPostsYet: "No posts yet"
   }
 };

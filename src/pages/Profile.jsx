@@ -4,28 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import { 
   Edit2, Calendar, ChevronLeft, Save, X, Camera, 
-  Info, AtSign, CheckCircle2, MessageSquare, Loader, Upload, Image as ImageIcon
+  Info, AtSign, CheckCircle2, MessageSquare, Loader, Upload, 
+  Image as ImageIcon, Grid, Video, Heart, Settings, Archive, Plus
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-const ANIME_AVATARS = [
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Smile1&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Joy2&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Laugh3&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Happy4&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Star5&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Sun6&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Beam7&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Bright8&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Cheer9&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Gold10&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Amber11&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Honey12&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Lemon13&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Sweet14&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Candy15&backgroundColor=f5d90a',
-  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Lolly16&backgroundColor=f5d90a',
-];
 
 const Profile = () => {
   const { user, setUser, lang } = useAuth();
@@ -36,12 +18,12 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [activeTab, setActiveTab] = useState('posts');
   const [uploading, setUploading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    avatar: '',
-    bio: ''
+    firstName: '', lastName: '', avatar: '', bio: ''
   });
   
   const fileInputRef = useRef(null);
@@ -49,30 +31,48 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfile();
+    fetchUserPosts();
   }, [userId]);
 
   const fetchProfile = async () => {
     setLoading(true);
     try {
       const targetId = userId || user.id;
-      const response = await axios.get(`/api/users/profile/${targetId}`);
-      setProfileData(response.data);
+      const res = await axios.get(`/api/users/profile/${targetId}`);
+      setProfileData(res.data);
+      setIsFollowing(res.data.followers?.includes(user.id));
       setFormData({
-        firstName: response.data.firstName,
-        lastName: response.data.lastName,
-        avatar: response.data.avatar || '',
-        bio: response.data.bio || ''
+        firstName: res.data.firstName,
+        lastName: res.data.lastName,
+        avatar: res.data.avatar || '',
+        bio: res.data.bio || ''
       });
-    } catch (err) {
-      console.error(err);
-      if (err.response?.status === 401) window.location.href = '/';
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  const handleUpdate = async (e) => {
-    if (e) e.preventDefault();
+  const fetchUserPosts = async () => {
+    try {
+      const targetId = userId || user.id;
+      const res = await axios.get(`/api/posts/user/${targetId}`);
+      setPosts(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleFollow = async () => {
+    try {
+      const res = await axios.post(`/api/users/${profileData._id}/follow`);
+      setIsFollowing(res.data.isFollowing);
+      setProfileData(prev => ({
+        ...prev,
+        followers: res.data.isFollowing 
+          ? [...prev.followers, user.id] 
+          : prev.followers.filter(id => id !== user.id)
+      }));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleUpdate = async () => {
     try {
       const response = await axios.put('/api/users/me', formData);
       setUser({ ...user, ...response.data });
@@ -94,165 +94,140 @@ const Profile = () => {
     finally { setUploading(false); }
   };
 
-  const selectAnimeAvatar = (url) => {
-    setFormData({ ...formData, avatar: url });
-  };
-
-  const getInitials = (f, l) => (f ? (f[0] + (l ? l[0] : '')).toUpperCase() : '?');
-
-  if (loading) return (
-    <div className="tg-profile-page">
-      <div className="tg-loading"><div className="tg-spinner"></div></div>
-    </div>
-  );
-  if (!profileData) return <div className="tg-profile-page"><div className="tg-error">User topilmadi</div></div>;
+  if (loading) return <div className="loading-screen"><Loader className="spin" /></div>;
+  if (!profileData) return <div className="error-screen">User Not Found</div>;
 
   return (
-    <div className="tg-profile-page">
-      <div className="tg-profile-container">
-        <div className="tg-p-header">
-          <button className="tg-back-btn" onClick={() => navigate(-1)}><ChevronLeft size={24} /></button>
-          <div className="tg-header-title">{isOwnProfile ? t.profile : profileData.firstName}</div>
-          {isOwnProfile && (
-            <button className={`tg-edit-toggle ${isEditing ? 'active' : ''}`} onClick={() => setIsEditing(!isEditing)}>
-              {isEditing ? <X size={22} /> : <Edit2 size={22} />}
-            </button>
-          )}
+    <div className="insta-profile">
+      <header className="profile-header">
+        <button onClick={() => navigate(-1)} className="back-link"><ChevronLeft size={24} /></button>
+        <h2 className="username-title">{profileData.username}</h2>
+        <div className="header-icons">
+          {isOwnProfile && <button onClick={() => navigate('/settings')}><Settings size={22} /></button>}
         </div>
+      </header>
 
-        <div className="tg-p-content">
-          <div className="tg-hero-card">
-            <div className="tg-p-avatar-wrapper">
-              {uploading ? (
-                <div className="tg-avatar-loader"><Loader className="spin" /></div>
-              ) : formData.avatar || profileData.avatar ? (
-                <img src={isEditing ? formData.avatar : profileData.avatar} alt="avatar" className="tg-p-avatar-img" />
-              ) : (
-                <div className="tg-p-avatar-placeholder">{getInitials(profileData.firstName, profileData.lastName)}</div>
-              )}
-              {isEditing && !uploading && (
-                <div className="tg-avatar-badge" onClick={() => fileInputRef.current.click()}>
-                   <Camera size={16} />
-                </div>
-              )}
+      <main className="profile-main">
+        <section className="user-intro">
+          <div className="avatar-section">
+            <div className="avatar-circle">
+                {profileData.avatar ? <img src={profileData.avatar} alt="v" /> : <span>{profileData.firstName[0]}</span>}
+                {isOwnProfile && <button className="add-story-btn" onClick={() => fileInputRef.current.click()}><Plus size={16} /></button>}
             </div>
-            
-            <input type="file" ref={fileInputRef} hidden onChange={handleAvatarChange} accept="image/*" />
-
-            {!isEditing ? (
-              <div className="tg-user-names">
-                <h1 className="tg-full-name">{profileData.firstName} {profileData.lastName}</h1>
-                <p className="tg-username">@{profileData.username}</p>
-              </div>
-            ) : (
-              <div className="tg-edit-inputs">
-                <input type="text" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder={t.firstName} className="tg-p-input" />
-                <input type="text" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder={t.lastName} className="tg-p-input" />
-              </div>
-            )}
+            <input type="file" ref={fileInputRef} hidden onChange={handleAvatarChange} />
           </div>
 
-          <div className="tg-p-details">
-            <div className="tg-detail-item bio">
-              <div className="tg-detail-icon"><Info size={20} /></div>
-              <div className="tg-detail-body">
-                <label>{t.bio}</label>
-                {isEditing ? (
-                  <textarea value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value.slice(0, 150)})} placeholder="Bio..." className="tg-p-textarea" rows="3" />
-                ) : (
-                  <p className="tg-bio-text">{profileData.bio || t.noBio}</p>
-                )}
-              </div>
-            </div>
+          <div className="stats-section">
+             <div className="stat-item"><b>{posts.length}</b> <span>{t.posts}</span></div>
+             <div className="stat-item"><b>{profileData.followers?.length || 0}</b> <span>{t.followers}</span></div>
+             <div className="stat-item"><b>{profileData.following?.length || 0}</b> <span>{t.following}</span></div>
+          </div>
+        </section>
 
-            <div className="tg-detail-item">
-              <div className="tg-detail-icon"><AtSign size={20} /></div>
-              <div className="tg-detail-body">
-                <label>{t.username}</label>
-                <p>@{profileData.username}</p>
-              </div>
-            </div>
-
-            {isEditing && (
+        <section className="bio-section">
+          <h1 className="display-name">{profileData.firstName} {profileData.lastName}</h1>
+          <p className="bio-text">{profileData.bio || 'Social user'}</p>
+          <div className="profile-actions">
+            {isOwnProfile ? (
               <>
-                {/* Gallery Upload Button */}
-                <div className="gallery-upload-section fade-in">
-                  <button className="gallery-upload-btn" onClick={() => fileInputRef.current.click()}>
-                    <Upload size={20} />
-                    <span>{t.uploadFromGallery}</span>
-                  </button>
-                </div>
-
-                {/* Anime Avatars */}
-                <div className="anime-selector-section fade-in">
-                  <h3>{t.animeAvatars}</h3>
-                  <div className="anime-grid">
-                    {ANIME_AVATARS.map((url, i) => (
-                      <div key={i} className={`anime-item ${formData.avatar === url ? 'active' : ''}`} onClick={() => selectAnimeAvatar(url)}>
-                        <img src={url} alt="anime" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <button className="tg-save-big" onClick={handleUpdate} disabled={uploading}>
-                   <Save size={20} /> {t.save}
-                </button>
+                <button className="action-btn secondary" onClick={() => setIsEditing(true)}>{t.editProfile}</button>
+                <button className="action-btn secondary" onClick={() => navigate('/archive')}>{t.viewArchive}</button>
               </>
+            ) : (
+                <button 
+                  className={`action-btn ${isFollowing ? 'secondary' : 'primary'}`} 
+                  onClick={handleFollow}
+                >
+                  {isFollowing ? t.unfollow : t.follow}
+                </button>
             )}
           </div>
+        </section>
+
+        <div className="profile-tabs">
+          <button className={activeTab === 'posts' ? 'active' : ''} onClick={() => setActiveTab('posts')}><Grid size={20} /></button>
+          <button className={activeTab === 'reels' ? 'active' : ''} onClick={() => setActiveTab('reels')}><Video size={20} /></button>
         </div>
-      </div>
+
+        <div className="post-grid">
+          {posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel).map(post => (
+            <div key={post._id} className="grid-item" onClick={() => navigate(`/post/${post._id}`)}>
+              {post.fileType === 'video' ? <video src={post.fileUrl} /> : <img src={post.fileUrl} alt="p" />}
+              {post.isReel && <div className="reel-badge"><Video size={14} /></div>}
+            </div>
+          ))}
+          {posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
+        </div>
+      </main>
+
+      {isEditing && (
+        <div className="edit-modal-overlay">
+          <div className="edit-modal">
+            <h3>{t.editProfile}</h3>
+            <input type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder={t.firstName} />
+            <input type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder={t.lastName} />
+            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} placeholder="Bio..." rows="4"></textarea>
+            <div className="modal-btns">
+              <button onClick={() => setIsEditing(false)}>{t.cancel}</button>
+              <button className="save" onClick={handleUpdate}>{t.save}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx="true">{`
-        .tg-profile-page { width: 100vw; min-height: 100vh; background: var(--bg-secondary); position: fixed; inset: 0; z-index: 1000; overflow-y: auto; }
-        .tg-loading { display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .tg-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .tg-error { display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text-secondary); font-size: 1.1rem; }
-        .tg-profile-container { width: 100%; max-width: 500px; margin: 0 auto; background: var(--bg-primary); min-height: 100vh; }
-        .tg-p-header { padding: 12px 20px; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; background: var(--bg-primary); z-index: 10; border-bottom: 1px solid var(--border); }
-        .tg-back-btn { color: var(--accent); padding: 4px; }
-        .tg-header-title { flex: 1; font-size: 1.2rem; font-weight: 800; }
-        .tg-edit-toggle { color: var(--accent); padding: 6px; border-radius: 50%; }
-        .tg-edit-toggle:hover { background: rgba(135,116,225,0.1); }
-        .tg-hero-card { padding: 2rem; display: flex; flex-direction: column; align-items: center; background: linear-gradient(to bottom, rgba(135,116,225,0.05), transparent); }
-        .tg-p-avatar-wrapper { width: 120px; height: 120px; border-radius: 50%; background: var(--accent); position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .tg-p-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-        .tg-p-avatar-placeholder { font-size: 3rem; color: white; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 900; }
-        .tg-avatar-loader { height: 100%; display: flex; align-items: center; justify-content: center; color: white; }
-        .tg-avatar-badge { position: absolute; bottom: 6px; right: 6px; background: var(--accent); color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--bg-primary); cursor: pointer; }
-        .tg-full-name { font-size: 1.5rem; font-weight: 900; margin-top: 1rem; text-align: center; }
-        .tg-username { color: var(--accent); font-weight: 700; margin-top: 4px; }
-        .tg-edit-inputs { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 1rem; }
-        .tg-p-details { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        .tg-detail-item { display: flex; gap: 15px; }
-        .tg-detail-icon { color: var(--accent); opacity: 0.8; flex-shrink: 0; margin-top: 2px; }
-        .tg-detail-body { flex: 1; }
-        .tg-detail-body label { font-size: 0.75rem; color: var(--accent); font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .tg-detail-body p { font-size: 1rem; color: var(--text-primary); }
-        .tg-bio-text { color: var(--text-secondary); }
-        .tg-p-input, .tg-p-textarea { width: 100%; padding: 12px; border-radius: 12px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); font-size: 1rem; }
-        .tg-p-textarea { resize: vertical; font-family: inherit; }
+        .insta-profile { width: 100%; max-width: 600px; margin: 0 auto; background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; }
+        .profile-header { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-primary); z-index: 100; }
+        .username-title { flex: 1; text-align: center; font-size: 1.1rem; font-weight: 800; }
+        .profile-main { padding: 20px; }
         
-        .gallery-upload-section { display: flex; }
-        .gallery-upload-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 18px; background: var(--bg-secondary); border-radius: 14px; color: var(--accent); font-weight: 700; font-size: 1rem; border: 1.5px dashed var(--accent); cursor: pointer; }
-        .gallery-upload-btn:hover { background: rgba(135,116,225,0.08); }
+        .user-intro { display: flex; align-items: center; gap: 30px; margin-bottom: 20px; }
+        .avatar-section { position: relative; }
+        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--bg-secondary); border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; }
+        .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .add-story-btn { position: absolute; bottom: 0; right: 0; background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-primary); }
+        
+        .stats-section { flex: 1; display: flex; justify-content: space-around; }
+        .stat-item { display: flex; flex-direction: column; align-items: center; }
+        .stat-item b { font-size: 1.1rem; }
+        .stat-item span { font-size: 0.85rem; color: var(--text-secondary); }
 
-        .anime-selector-section { margin-top: 5px; }
-        .anime-selector-section h3 { font-size: 0.85rem; font-weight: 800; margin-bottom: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .anime-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .anime-item { aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: var(--bg-secondary); cursor: pointer; border: 3px solid transparent; }
-        .anime-item:hover { border-color: rgba(135,116,225,0.3); transform: scale(1.05); }
-        .anime-item.active { border-color: var(--accent); transform: scale(1.08); box-shadow: 0 0 0 3px rgba(135,116,225,0.2); }
-        .anime-item img { width: 100%; height: 100%; object-fit: cover; }
+        .bio-section { margin-bottom: 20px; }
+        .display-name { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
+        .bio-text { font-size: 0.95rem; color: var(--text-primary); line-height: 1.4; white-space: pre-wrap; }
         
-        .tg-save-big { width: 100%; padding: 14px; background: var(--accent); color: white; border-radius: 50px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; border: none !important; cursor: pointer; font-size: 1rem; }
-        .tg-save-big:hover { opacity: 0.9; }
+        .profile-actions { display: flex; gap: 8px; margin-top: 15px; }
+        .action-btn { flex: 1; padding: 10px; border-radius: 10px; font-weight: 700; border: none !important; font-size: 0.9rem; }
+        .action-btn.primary { background: var(--accent); color: white; }
+        .action-btn.secondary { background: var(--bg-secondary); color: var(--text-primary); }
+
+        .profile-tabs { display: flex; border-top: 1px solid var(--border); margin-top: 20px; }
+        .profile-tabs button { flex: 1; padding: 15px; border: none !important; background: transparent; color: var(--text-secondary); opacity: 0.5; }
+        .profile-tabs button.active { color: var(--text-primary); opacity: 1; border-top: 2px solid var(--text-primary) !important; border-radius: 0; }
+
+        .post-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+        .grid-item { aspect-ratio: 1; background: var(--bg-secondary); overflow: hidden; position: relative; }
+        .grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; }
+        .reel-badge { position: absolute; top: 8px; right: 8px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        
+        .edit-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .edit-modal { background: var(--bg-primary); width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .edit-modal input, .edit-modal textarea { padding: 12px; border-radius: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 800; border: none !important; }
+        .modal-btns .save { background: var(--accent); color: white; }
+
+        .loading-screen, .error-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); color: var(--accent); }
         .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+          .insta-profile { max-width: 100%; }
+        }
       `}</style>
     </div>
   );
 };
 
 export default Profile;
+
