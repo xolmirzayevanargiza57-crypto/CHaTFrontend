@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { translations } from '../i18n';
 import SearchBar from './SearchBar';
-import { Sun, Moon, MessageSquare, Settings, User, LogOut, Plus, X, Heart, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sun, Moon, MessageSquare, Settings, User, LogOut, Plus, X, Heart, Eye, ChevronLeft, ChevronRight, Music, StopCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFriendAdded, onRemoveFriend }) => {

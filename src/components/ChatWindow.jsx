@@ -427,7 +427,9 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
           </div>
         ) : (
           <form className="input-form" onSubmit={(e) => { e.preventDefault(); uploadAndSend(); }}>
-            <button type="button" className="icon-btn" onClick={() => fileInputRef.current.click()}><Paperclip size={22} /></button>
+            <button type="button" className="icon-btn" title={t.attachFile} onClick={() => { fileInputRef.current.accept = "*/*"; fileInputRef.current.click(); }}><Paperclip size={22} /></button>
+            <button type="button" className="icon-btn hide-on-small" onClick={() => { fileInputRef.current.accept = "image/*"; fileInputRef.current.click(); }}><ImageIcon size={22} /></button>
+            <button type="button" className="icon-btn hide-on-small" onClick={() => { fileInputRef.current.accept = "video/*"; fileInputRef.current.click(); }}><Video size={22} /></button>
             <button type="button" className="icon-btn panel-toggle" onClick={() => setShowMediaPanel(!showMediaPanel)}>
                <Smile size={22} color={showMediaPanel ? 'var(--accent)' : 'currentColor'} />
             </button>
@@ -438,7 +440,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
               onChange={(e) => handleTextChange(e.target.value)}
               onFocus={() => setShowMediaPanel(false)}
             />
-            <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} accept="image/*,video/*,audio/*" />
+            <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} />
             {text.trim() || preview ? (
               <button type="submit" className="send-btn" disabled={uploading}>
                 <Send size={20} />
@@ -599,6 +601,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
           .input-area { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
           .media-panel { bottom: 90px; left: 8px; right: 8px; width: auto; max-width: none; }
           .preview-float { bottom: 90px; left: 8px; right: 8px; max-width: none; }
+          .hide-on-small { display: none !important; }
         }
       `}</style>
     </div>
