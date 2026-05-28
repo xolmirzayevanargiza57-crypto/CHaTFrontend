@@ -194,20 +194,11 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (!friend) return (
-    <div className="chat-window empty">
-      <div className="welcome-content">
-        <h1 className="welcome-logo">CHaT</h1>
-        <p>{t.selectChat}</p>
-      </div>
-    </div>
-  );
-
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !friend) return;
     
     const handleTyping = (data) => {
       if (friend && data.from === friend._id) {
@@ -234,6 +225,20 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
       socket.emit('typing', { from: user.id, to: friend._id });
     }
   };
+
+  if (!friend) return (
+    <div className="chat-window empty hide-mobile">
+      <div className="welcome-content">
+        <h1 className="welcome-logo">CHaT</h1>
+        <p>{t.selectChat}</p>
+      </div>
+      <style jsx="true">{`
+        @media (max-width: 768px) {
+          .hide-mobile { display: none !important; }
+        }
+      `}</style>
+    </div>
+  );
 
   return (
     <div className="chat-window">
