@@ -213,7 +213,7 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
               ))}
             </div>
             <div className="story-header">
-              <div className="story-user-info">
+              <div className="story-user-info" onClick={() => { closeStoryViewer(); navigate(`/profile/${viewingStory.user._id}`); }}>
                 <img src={viewingStory.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${viewingStory.user.username}`} alt="u" className="story-user-avatar" />
                 <div>
                   <p className="story-user-name">{viewingStory.user.firstName} {viewingStory.user.lastName}</p>

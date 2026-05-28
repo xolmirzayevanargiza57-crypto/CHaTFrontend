@@ -9,22 +9,22 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 
 const ANIME_AVATARS = [
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Yellow1',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Happy2',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Sun3',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Joy4',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Smile5',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Bright6',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Beam7',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Laugh8',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Cheer9',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Gold10',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Star11',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Amber12',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Honey13',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=Lemon14',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=HoneyBear15',
-  'https://api.dicebear.com/7.x/big-smile/svg?seed=SunnyDay16',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Smile1&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Joy2&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Laugh3&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Happy4&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Star5&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Sun6&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Beam7&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Bright8&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Cheer9&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Gold10&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Amber11&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Honey12&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Lemon13&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Sweet14&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Candy15&backgroundColor=f5d90a',
+  'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Lolly16&backgroundColor=f5d90a',
 ];
 
 const Profile = () => {
