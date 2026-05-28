@@ -14,6 +14,20 @@ export const AuthProvider = ({ children }) => {
     } else {
       delete axios.defaults.headers.common['Authorization'];
     }
+
+    // Handle 401 errors globally
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && error.response.status === 401) {
+          logout();
+          window.location.href = '/';
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => axios.interceptors.response.eject(interceptor);
   }, [token]);
 
   const login = (data) => {
@@ -21,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     setUser(data.user);
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
+    axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
   };
 
   const logout = () => {
@@ -28,6 +43,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('friends_cache');
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   const changeLang = (newLang) => {
