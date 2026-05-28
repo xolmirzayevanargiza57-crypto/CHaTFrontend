@@ -348,13 +348,17 @@ const Profile = () => {
 
       <style>{`
         .tg-profile {
-          width: 100%;
+          width: 100% !important;
           min-height: 100vh;
           background: var(--bg-primary);
-          padding-bottom: 151px;
+          padding-bottom: 120px;
           display: flex;
           flex-direction: column;
-          overflow-x: hidden;
+          margin: 0 !important;
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: 999;
         }
         .tg-header {
           display: flex;
