@@ -65,16 +65,29 @@ html, body, #root {
 
 input, textarea, select, button {
   font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+  background: none;
 }
 
 /* Telegram style scrollbar */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
 .fade-in {
   animation: fadeIn 0.25s ease-out forwards;
+}
+
+.tg-profile-page, .settings-page {
+  overflow-y: auto !important;
+  max-height: 100vh;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {

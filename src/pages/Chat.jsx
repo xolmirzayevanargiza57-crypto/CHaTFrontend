@@ -4,7 +4,6 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
 import ChatWindow from '../components/ChatWindow';
-import VideoCall from '../components/VideoCall';
 
 let socket;
 
@@ -14,15 +13,11 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
-  
-  // Call States
-  const [call, setCall] = useState({ isReceiving: false, from: null, signal: null, active: false });
 
   const fetchFriends = useCallback(async () => {
     try {
       const response = await axios.get('/api/users/friends');
       setFriends(response.data.map(f => ({ ...f, unreadCount: 0 })));
-      // Do'stlar ro'yxatini tezroq ko'rsatish uchun local storagega saqlab qo'yish mumkin
       localStorage.setItem('friends_cache', JSON.stringify(response.data));
     } catch (err) {
       console.error(err);
@@ -30,7 +25,6 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    // Cache'dan darhol yuklash
     const cache = localStorage.getItem('friends_cache');
     if (cache) {
       setFriends(JSON.parse(cache).map(f => ({ ...f, unreadCount: 0 })));
@@ -39,24 +33,15 @@ const Chat = () => {
     fetchFriends();
     
     if (!socket) {
-      let socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
-      socketUrl = socketUrl.replace('/api', '');
-      
-      socket = io(socketUrl, {
+      const socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
+      socket = io(socketUrl.replace('/api', ''), {
         transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 1000
       });
     }
 
     socket.on('connect', () => {
-      console.log('✅ Socket connected:', socket.id);
       socket.emit('join', user.id);
-    });
-
-    socket.on('connect_error', (err) => {
-      console.error('❌ Socket connection error:', err);
     });
 
     socket.on('userOnline', (userId) => {
@@ -67,42 +52,26 @@ const Chat = () => {
       setOnlineUsers((prev) => prev.filter(id => id !== userId));
     });
 
-    socket.on('callUser', ({ from, signal, name, avatar }) => {
-        setFriends(prev => {
-            const caller = prev.find(f => f._id === from);
-            setCall({ 
-              isReceiving: true, 
-              from: caller || { _id: from, firstName: name || 'Foydalanuvchi', lastName: '', avatar: avatar || '' }, 
-              signal, 
-              active: true 
-            });
-            return prev;
-        });
-    });
-
     socket.on('receiveMessage', (message) => {
       setMessages((prev) => {
-        if (selectedFriend && (message.from === selectedFriend._id || message.to === selectedFriend._id)) {
+        const isFromMe = message.from === user.id;
+        const isSelectedFriend = selectedFriend && (message.from === selectedFriend._id || message.to === selectedFriend._id);
+        
+        if (isSelectedFriend) {
+          // Xabar dublikat bo'lmasligi uchun tekshiramiz
+          if (prev.some(m => m._id === message._id)) return prev;
           return [...prev, message];
         }
         return prev;
       });
 
       if (!selectedFriend || message.from !== selectedFriend._id) {
-         setFriends(prev => {
-             const exists = prev.some(f => f._id === message.from);
-             if (exists) {
-                 return prev.map(f => f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f);
-             }
-             return prev;
-         });
+         setFriends(prev => prev.map(f => f._id === message.from ? { ...f, unreadCount: (f.unreadCount || 0) + 1 } : f));
       }
     });
 
     socket.on('chatCleared', (data) => {
-      if (selectedFriend && data.from === selectedFriend._id) {
-        setMessages([]);
-      }
+      if (selectedFriend && data.from === selectedFriend._id) setMessages([]);
     });
 
     socket.on('messagesDeleted', (data) => {
@@ -118,19 +87,12 @@ const Chat = () => {
     });
 
     socket.on('newFriend', (newFriend) => {
-        setFriends(prev => {
-            const exists = prev.some(f => f._id === newFriend._id);
-            if (!exists) {
-                return [...prev, { ...newFriend, unreadCount: 1 }];
-            }
-            return prev;
-        });
+        setFriends(prev => prev.some(f => f._id === newFriend._id) ? prev : [...prev, { ...newFriend, unreadCount: 1 }]);
     });
 
     return () => {
       socket.off('userOnline');
       socket.off('userOffline');
-      socket.off('callUser');
       socket.off('receiveMessage');
       socket.off('chatCleared');
       socket.off('messagesDeleted');
@@ -138,14 +100,6 @@ const Chat = () => {
       socket.off('newFriend');
     };
   }, [user.id, selectedFriend, fetchFriends]);
-
-  const handleStartCall = () => {
-      setCall({ isReceiving: false, from: selectedFriend, signal: null, active: true });
-  };
-
-  const handleEndCall = () => {
-      setCall({ isReceiving: false, from: null, signal: null, active: false });
-  };
 
   const fetchMessages = async (friendId) => {
     try {
@@ -156,70 +110,51 @@ const Chat = () => {
     }
   };
 
-  const handleSendMessage = async (text, isSticker = false) => {
+  useEffect(() => {
+    if (selectedFriend) {
+      // Unread countni tozalash
+      setFriends(prev => prev.map(f => f._id === selectedFriend._id ? { ...f, unreadCount: 0 } : f));
+      fetchMessages(selectedFriend._id);
+    }
+  }, [selectedFriend]);
+
+  const handleSendMessage = async (payload) => {
     try {
-      const response = await axios.post(`/api/messages/${selectedFriend._id}`, { text, isSticker });
-      setMessages([...messages, response.data]);
+      // payload: { text, isSticker, fileType, file_id, fileName, fileMimeType, fileUrl }
+      const response = await axios.post(`/api/messages/${selectedFriend._id}`, payload);
+      setMessages(prev => [...prev, response.data]);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Clear chat for BOTH sides
   const handleClearForBoth = async () => {
     try {
       await axios.delete(`/api/messages/clear-both/${selectedFriend._id}`);
       setMessages([]);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // Clear chat only for ME
   const handleClearForMe = async () => {
     try {
       await axios.delete(`/api/messages/clear-for-me/${selectedFriend._id}`);
       setMessages([]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Legacy clear (kept for backward compat)
-  const handleClearChat = async () => {
-    try {
-      await axios.delete(`/api/messages/clear/${selectedFriend._id}`);
-      setMessages([]);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleDeleteMessages = async (messageIds) => {
     try {
-      await axios.delete('/api/messages/delete', { 
-        data: { 
-          messageIds, 
-          toUserId: selectedFriend._id 
-        } 
-      });
+      await axios.delete('/api/messages/delete', { data: { messageIds, toUserId: selectedFriend._id } });
       setMessages(prev => prev.filter(msg => !messageIds.includes(msg._id)));
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleRemoveFriend = async (friendId) => {
     try {
       await axios.delete(`/api/users/remove-friend/${friendId}`);
       setFriends(prev => prev.filter(f => f._id !== friendId));
-      if (selectedFriend?._id === friendId) {
-        setSelectedFriend(null);
-        setMessages([]);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      if (selectedFriend?._id === friendId) setSelectedFriend(null);
+    } catch (err) { console.error(err); }
   };
 
   return (
@@ -239,21 +174,9 @@ const Chat = () => {
         onSendMessage={handleSendMessage}
         onClearForBoth={handleClearForBoth}
         onClearForMe={handleClearForMe}
-        onClearChat={handleClearChat}
         onDeleteMessages={handleDeleteMessages}
         onBack={() => setSelectedFriend(null)}
-        onStartCall={handleStartCall}
       />
-
-      {call.active && (
-          <VideoCall 
-            socket={socket} 
-            friend={call.from} 
-            isReceiving={call.isReceiving} 
-            signal={call.signal}
-            onEnd={handleEndCall}
-          />
-      )}
 
       <style jsx="true">{`
         .chat-page {

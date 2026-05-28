@@ -12,7 +12,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="tg-settings">
+    <div className="settings-page">
       <div className="tg-header">
         <button className="tg-back" onClick={() => navigate('/chat')}>
           <ChevronLeft size={22} />
