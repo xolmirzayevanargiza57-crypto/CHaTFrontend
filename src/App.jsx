@@ -18,6 +18,11 @@ const ProtectedRoute = ({ children }) => {
   return token ? children : <Navigate to="/" />;
 };
 
+const ProfileWithKey = () => {
+  const { userId } = useParams();
+  return <Profile key={userId} />;
+};
+
 const AppContent = () => {
   const { token } = useAuth();
 
@@ -31,8 +36,8 @@ const AppContent = () => {
         <Route path="/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
         <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile key="me" /></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><ProfileWithKey /></ProtectedRoute>} />
         <Route path="/stories/:userId" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
       </Routes>
     </Router>

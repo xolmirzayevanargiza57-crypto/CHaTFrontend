@@ -5,7 +5,7 @@ import { translations } from '../i18n';
 import { 
   Edit2, Calendar, ChevronLeft, Save, X, Camera, 
   Info, AtSign, CheckCircle2, MessageSquare, Loader, Upload, 
-  Image as ImageIcon, Grid, Video, Heart, Settings, Archive, Plus
+  Image as ImageIcon, Grid, Video, Heart, Settings, Archive, Plus, Trash2
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -26,6 +26,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', avatar: '', bio: '', username: ''
   });
+  const [selectedPost, setSelectedPost] = useState(null);
   
   const fileInputRef = useRef(null);
   const storyInputRef = useRef(null);
@@ -202,17 +203,36 @@ const Profile = () => {
 
         <div className="post-grid">
           {posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel).map(post => (
-            <div key={post._id} className="grid-item" onClick={() => navigate(`/post/${post._id}`)}>
-              {post.fileType === 'video' ? <video src={post.fileUrl} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} /> : <img src={post.fileUrl} alt="p" />}
+            <div key={post._id} className="grid-item" onClick={() => setSelectedPost(post)}>
+              {post.fileType === 'video' ? <video src={post.fileUrl} muted /> : <img src={post.fileUrl} alt="p" />}
               {post.isReel && <div className="reel-badge"><Video size={14} /></div>}
-              {isOwnProfile && (
-                <button className="delete-post-btn" onClick={(e) => { e.stopPropagation(); handleDeletePost(post._id); }}><Trash2 size={14} /></button>
-              )}
             </div>
           ))}
           {posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
         </div>
       </main>
+
+      {selectedPost && (
+        <div className="post-preview-overlay" onClick={() => setSelectedPost(null)}>
+          <div className="post-preview-modal" onClick={e => e.stopPropagation()}>
+            <button className="close-preview" onClick={() => setSelectedPost(null)}><X size={24} /></button>
+            <div className="preview-media">
+               {selectedPost.fileType === 'video' ? <video src={selectedPost.fileUrl} controls autoPlay loop /> : <img src={selectedPost.fileUrl} alt="p" />}
+            </div>
+            <div className="preview-sidebar">
+               <div className="preview-owner">
+                  <img src={profileData.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profileData.username}`} alt="v" />
+                  <b>{profileData.username}</b>
+                  {isOwnProfile && <button className="del-btn" onClick={() => { handleDeletePost(selectedPost._id); setSelectedPost(null); }}><Trash2 size={20} /></button>}
+               </div>
+               <div className="preview-content">
+                  <p>{selectedPost.caption}</p>
+                  <span>{new Date(selectedPost.createdAt).toLocaleString()}</span>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isEditing && (
         <div className="edit-modal-overlay">
@@ -278,12 +298,28 @@ const Profile = () => {
         .upload-progress-bar .fill { height: 4px; background: var(--accent); border-radius: 2px; flex: 1; transition: width 0.3s; }
         .upload-progress-bar span { font-size: 0.8rem; font-weight: 800; color: var(--accent); }
 
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .post-preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .post-preview-modal { background: var(--bg-primary); width: 100%; max-width: 900px; height: 80vh; display: flex; border-radius: 12px; overflow: hidden; position: relative; }
+        .close-preview { position: absolute; top: 15px; right: 15px; color: white; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .preview-media { flex: 1.5; background: #000; display: flex; align-items: center; justify-content: center; }
+        .preview-media img, .preview-media video { width: 100%; height: 100%; object-fit: contain; }
+        .preview-sidebar { flex: 1; display: flex; flex-direction: column; border-left: 1px solid var(--border); background: var(--bg-primary); }
+        .preview-owner { padding: 15px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+        .preview-owner img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+        .preview-owner b { font-size: 0.95rem; flex: 1; }
+        .del-btn { color: #ff3b30; }
+        .preview-content { padding: 15px; flex: 1; overflow-y: auto; }
+        .preview-content p { font-size: 0.95rem; line-height: 1.5; margin-bottom: 10px; }
+        .preview-content span { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
 
         @media (max-width: 768px) {
-          .insta-profile { max-width: 100%; }
+          .post-preview-modal { flex-direction: column; height: 90vh; }
+          .preview-sidebar { flex: none; height: 200px; }
+          .preview-media { flex: 1; }
         }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

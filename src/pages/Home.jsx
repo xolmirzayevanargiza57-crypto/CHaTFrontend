@@ -14,7 +14,65 @@ const Home = () => {
     const [storyGroups, setStoryGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedPosts, setExpandedPosts] = useState({});
-    const [isMuted, setIsMuted] = useState(true);
+    
+    const PostCard = ({ post, user, t, onLike, onDelete }) => {
+        const [postMuted, setPostMuted] = useState(true);
+        const [isExpanded, setIsExpanded] = useState(false);
+        const navigate = useNavigate();
+
+        return (
+            <article className="post-card">
+                <div className="post-owner" onClick={() => navigate(`/profile/${post.user._id}`)}>
+                    <div className="avatar">
+                        {post.user.avatar ? <img src={post.user.avatar} alt="v" /> : <span>{post.user.firstName[0]}</span>}
+                    </div>
+                    <div className="owner-info">
+                        <h3>{post.user.username}</h3>
+                        <p>{post.user.firstName} {post.user.lastName}</p>
+                    </div>
+                    {post.user._id === user.id && (
+                        <button className="post-menu-del" onClick={(e) => { e.stopPropagation(); onDelete(post._id); }}>
+                            <MoreHorizontal size={20} />
+                        </button>
+                    )}
+                </div>
+
+                <div className="post-media" onDoubleClick={() => onLike(post._id)}>
+                    {post.fileType === 'video' ? (
+                        <div className="video-wrapper">
+                            <video src={post.fileUrl} autoPlay muted={postMuted} loop playsInline />
+                            <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); setPostMuted(!postMuted); }}>
+                                {postMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                            </button>
+                        </div>
+                    ) : (
+                        <img src={post.fileUrl} alt="post" />
+                    )}
+                </div>
+
+                <div className="post-actions-overlay">
+                    <div className="action-btns">
+                        <button onClick={() => onLike(post._id)}>
+                            <Heart size={28} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
+                        </button>
+                    </div>
+                    <p className="likes-count"><b>{post.likes.length} likes</b></p>
+                    <div className="caption">
+                        <b>{post.user.username}</b>
+                        {isExpanded || post.caption.length < 60 ? (
+                            <span>{post.caption}</span>
+                        ) : (
+                            <>
+                                <span>{post.caption.slice(0, 60)}...</span>
+                                <button className="more-btn" onClick={() => setIsExpanded(true)}>more</button>
+                            </>
+                        )}
+                    </div>
+                    <p className="post-time">{new Date(post.createdAt).toLocaleDateString()}</p>
+                </div>
+            </article>
+        );
+    };
 
     useEffect(() => {
         fetchFeed();
@@ -56,9 +114,6 @@ const Home = () => {
             <header className="home-header">
                 <h1 className="logo">CHaT</h1>
                 <div className="header-actions">
-                    <button onClick={() => setIsMuted(!isMuted)} style={{marginRight: 15}}>
-                        {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
-                    </button>
                     <button onClick={() => navigate('/chat')}><Send size={24} /></button>
                 </div>
             </header>
@@ -81,111 +136,48 @@ const Home = () => {
             </div>
 
             <main className="feed-container">
-                {posts.map(post => (
-                    <article key={post._id} className="post-card">
-                        <div className="post-owner" onClick={() => navigate(`/profile/${post.user._id}`)}>
-                            <div className="avatar">
-                                {post.user.avatar ? <img src={post.user.avatar} alt="v" /> : <span>{post.user.firstName[0]}</span>}
-                            </div>
-                            <div className="owner-info">
-                                <h3>{post.user.username}</h3>
-                                <p>{post.user.firstName} {post.user.lastName}</p>
-                            </div>
-                            {post.user._id === user.id && (
-                                <button className="post-menu-del" onClick={(e) => { e.stopPropagation(); handleDeletePost(post._id); }}>
-                                    <MoreHorizontal size={20} />
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="post-media" onDoubleClick={() => handleLike(post._id)}>
-                            {post.fileType === 'video' ? (
-                                <div className="video-wrapper">
-                                    <video src={post.fileUrl} autoPlay muted={isMuted} loop playsInline />
-                                    <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}>
-                                        {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                                    </button>
-                                </div>
-                            ) : (
-                                <img src={post.fileUrl} alt="post" />
-                            )}
-                        </div>
-
-                        <div className="post-actions">
-                            <div className="left">
-                                <button onClick={() => handleLike(post._id)}>
-                                    <Heart size={26} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "currentColor"} />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="post-content">
-                            <p className="likes-count"><b>{post.likes.length} likes</b></p>
-                            <div className="caption">
-                                <b>{post.user.username}</b>
-                                {expandedPosts[post._id] || post.caption.length < 60 ? (
-                                    <span>{post.caption}</span>
-                                ) : (
-                                    <>
-                                        <span>{post.caption.slice(0, 60)}...</span>
-                                        <button className="more-btn" onClick={() => setExpandedPosts({...expandedPosts, [post._id]: true})}>more</button>
-                                    </>
-                                )}
-                            </div>
-                            <p className="post-time">{new Date(post.createdAt).toLocaleDateString()}</p>
-                        </div>
-                    </article>
-                ))}
+                {posts.map(post => <PostCard key={post._id} post={post} user={user} t={t} onLike={handleLike} onDelete={handleDeletePost} />)}
             </main>
 
             <BottomNav />
 
             <style jsx="true">{`
-                .home-page { background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
-                .home-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-primary); z-index: 100; max-width: 600px; margin: 0 auto; left: 0; right: 0; }
-                .logo { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); }
+                .home-page { background: var(--bg-primary); min-height: 100vh; max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+                .home-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg-primary); z-index: 100; flex-shrink: 0; }
+                .logo { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); letter-spacing: -1px; }
                 .header-actions button { background: transparent; border: none !important; color: var(--text-primary); }
 
-                .stories-bar { display: flex; gap: 15px; padding: 15px; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+                .stories-bar { display: flex; gap: 15px; padding: 15px; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; flex-shrink: 0; }
                 .stories-bar::-webkit-scrollbar { display: none; }
-                .story-item { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 70px; cursor: pointer; }
-                .story-avatar { width: 64px; height: 64px; border-radius: 50%; padding: 2px; border: 2px solid transparent; background: var(--bg-secondary); }
+                .story-item { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 75px; cursor: pointer; }
+                .story-avatar { width: 68px; height: 68px; border-radius: 50%; padding: 3px; border: 2px solid transparent; background: var(--bg-secondary); }
                 .story-avatar.unseen { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
                 .story-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-primary); }
-                .story-item span { font-size: 0.75rem; color: var(--text-primary); max-width: 65px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                .mine .story-avatar { background: var(--bg-secondary); border: 1px solid var(--border); position: relative; }
-                .mine .story-avatar span { font-size: 1.5rem; color: var(--accent); display: flex; align-items: center; justify-content: center; height: 100%; }
+                .story-item span { font-size: 0.78rem; font-weight: 500; color: var(--text-primary); max-width: 65px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-                .feed-container { display: flex; flex-direction: column; gap: 20px; padding: 15px 0; }
-                .post-card { border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-                .post-owner { display: flex; align-items: center; gap: 12px; padding: 0 15px 12px; cursor: pointer; }
-                .post-owner .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--bg-secondary); overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 1px solid var(--border); }
+                .feed-container { flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; background: #000; }
+                .feed-container::-webkit-scrollbar { display: none; }
+                .post-card { scroll-snap-align: start; scroll-snap-stop: always; height: calc(100vh - 140px); background: #000; display: flex; flex-direction: column; position: relative; border-bottom: 0.5px solid #222; }
+                
+                .post-owner { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px; padding: 15px; cursor: pointer; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); z-index: 20; color: white; }
+                .post-owner .avatar { width: 40px; height: 40px; border-radius: 50%; background: #333; overflow: hidden; border: 1.5px solid white; }
                 .post-owner .avatar img { width: 100%; height: 100%; object-fit: cover; }
-                .owner-info { flex: 1; }
-                .owner-info h3 { font-size: 0.95rem; font-weight: 800; margin: 0; }
-                .owner-info p { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
-                .post-menu { background: transparent; border: none !important; color: var(--text-secondary); }
+                .owner-info h3 { font-size: 0.95rem; font-weight: 800; margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+                .owner-info p { font-size: 0.8rem; opacity: 0.8; margin: 0; }
+                .post-menu-del { background: transparent; border: none !important; color: white; margin-left: auto; }
 
-                .post-menu-del { background: transparent; border: none !important; color: var(--text-secondary); cursor: pointer; padding: 5px; border-radius: 50%; }
-                .post-menu-del:hover { background: rgba(0,0,0,0.05); color: #ff3b30; }
+                .post-media { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; background: #000; position: relative; overflow: hidden; }
+                .video-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+                .post-media img, .post-media video { width: 100%; height: 100%; object-fit: contain; }
+                .video-sound-overlay { position: absolute; bottom: 85px; right: 15px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 30; }
 
-                .post-media { width: 100%; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-                .video-wrapper { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
-                .post-media img, .post-media video { width: 100%; height: auto; max-height: 80vh; object-fit: contain; background: #000; }
-                .video-sound-overlay { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
-
-                .post-actions { display: flex; justify-content: space-between; padding: 12px 15px 8px; }
-                .post-actions .left { display: flex; gap: 15px; }
-                .post-actions button { background: transparent; border: none !important; color: var(--text-primary); transition: transform 0.1s; }
-                .post-actions button:active { transform: scale(1.2); }
-
-                .post-content { padding: 0 15px; display: flex; flex-direction: column; gap: 5px; }
-                .likes-count { font-size: 0.95rem; margin: 0; }
-                .caption { font-size: 0.95rem; margin: 0; line-height: 1.4; display: inline; }
-                .caption b { margin-right: 6px; cursor: pointer; }
-                .more-btn { background: transparent; border: none !important; color: var(--text-secondary); font-size: 0.9rem; padding: 0; margin-left: 5px; cursor: pointer; }
-                .view-comments { background: transparent; border: none !important; color: var(--text-secondary); font-size: 0.9rem; text-align: left; padding: 0; margin-top: 5px; }
-                .post-time { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 5px; }
+                .post-actions-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white; z-index: 20; }
+                .action-btns { display: flex; gap: 20px; margin-bottom: 10px; }
+                .action-btns button { color: white; }
+                .likes-count { font-size: 0.95rem; font-weight: 700; margin-bottom: 5px; }
+                .caption { font-size: 0.95rem; line-height: 1.4; display: block; opacity: 0.95; }
+                .caption b { margin-right: 8px; }
+                .post-time { font-size: 0.75rem; opacity: 0.6; margin-top: 8px; text-transform: uppercase; }
             `}</style>
         </div>
     );
