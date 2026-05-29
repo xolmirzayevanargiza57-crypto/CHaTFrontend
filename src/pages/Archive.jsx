@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
-import { ChevronLeft, Loader, Calendar } from 'lucide-react';
+import { ChevronLeft, Loader, Calendar, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Archive = () => {
@@ -25,6 +25,14 @@ const Archive = () => {
         finally { setLoading(false); }
     };
 
+    const handleDeleteStory = async (storyId) => {
+        if (!window.confirm("Storyni o'chirishni istaysizmi?")) return;
+        try {
+            await axios.delete(`/api/stories/${storyId}`);
+            setStories(stories.filter(s => s._id !== storyId));
+        } catch (err) { alert("Xatolik!"); }
+    };
+
     if (loading) return <div className="loading-screen"><Loader className="spin" /></div>;
 
     return (
@@ -43,6 +51,9 @@ const Archive = () => {
                             <Calendar size={12} />
                             <span>{new Date(story.createdAt).toLocaleDateString()}</span>
                         </div>
+                        <button className="delete-archive-btn" onClick={() => handleDeleteStory(story._id)}>
+                            <Trash2 size={16} />
+                        </button>
                     </div>
                 ))}
             </main>
@@ -60,6 +71,8 @@ const Archive = () => {
                 .archive-item img, .archive-item video { width: 100%; height: 100%; object-fit: cover; }
                 
                 .item-date { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 600; }
+                .delete-archive-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+                .delete-archive-btn:hover { background: #ff3b30; }
                 
                 .loading-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); color: var(--accent); }
                 .spin { animation: spin 1s linear infinite; }

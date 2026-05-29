@@ -188,7 +188,12 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
                 <span className="friend-name">{friend.firstName} {friend.lastName}</span>
                 {friend.unreadCount > 0 && <span className="unread-badge">{friend.unreadCount}</span>}
               </div>
-              <span className="friend-username">@{friend.username}</span>
+              <div className="friend-bottom-row">
+                <span className="friend-username">@{friend.username}</span>
+                <button className="remove-friend-btn" onClick={(e) => { e.stopPropagation(); if(window.confirm("Do'stni o'chirishni istaysizmi?")) onRemoveFriend(friend._id); }}>
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -327,6 +332,11 @@ const Sidebar = ({ friends, onlineUsers, selectedFriend, onSelectFriend, onFrien
         .friend-name { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .friend-username { font-size: 0.8rem; color: var(--text-secondary); opacity: 0.8; }
         .unread-badge { background: #34c759; color: white; font-size: 0.72rem; font-weight: 800; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .friend-bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+        .remove-friend-btn { background: transparent; border: none !important; color: var(--text-secondary); opacity: 0; transition: 0.2s; cursor: pointer; padding: 2px; }
+        .friend-item:hover .remove-friend-btn { opacity: 0.5; }
+        .remove-friend-btn:hover { opacity: 1 !important; color: #ff3b30 !important; }
+        .friend-item.active .remove-friend-btn { color: white; }
 
         .sidebar-footer { padding: 12px 20px; display: flex; justify-content: space-evenly; border-top: 1px solid var(--border); background: var(--bg-primary); z-index: 10; gap: 8px; }
         .nav-btn { color: var(--text-secondary); padding: 12px; border-radius: 16px; transition: 0.2s; flex: 1; display: flex; justify-content: center; }
