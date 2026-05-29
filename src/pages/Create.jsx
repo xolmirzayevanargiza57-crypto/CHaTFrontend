@@ -15,6 +15,7 @@ const Create = () => {
     const [caption, setCaption] = useState('');
     const [isReel, setIsReel] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
 
     const handleFileSelect = (e) => {
@@ -28,10 +29,16 @@ const Create = () => {
     const handleUpload = async () => {
         if (!file) return;
         setUploading(true);
+        setUploadProgress(0);
         const formData = new FormData();
         formData.append('file', file);
         try {
-            const uploadRes = await axios.post('/api/upload', formData);
+            const uploadRes = await axios.post('/api/upload', formData, {
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(percentCompleted);
+                }
+            });
             await axios.post('/api/posts', {
                 fileUrl: uploadRes.data.fileUrl,
                 fileType: file.type.startsWith('video/') ? 'video' : 'image',
@@ -40,7 +47,7 @@ const Create = () => {
             });
             navigate('/');
         } catch (err) { alert("Xatolik!"); }
-        finally { setUploading(false); }
+        finally { setUploading(false); setUploadProgress(0); }
     };
 
     return (
@@ -54,7 +61,7 @@ const Create = () => {
             </header>
 
             <main className="create-content">
-                <div className="media-preview-box" onClick={() => !file && fileInputRef.current.click()}>
+                <div className={`media-preview-box ${isReel ? 'is-video' : ''}`} onClick={() => !file && fileInputRef.current.click()}>
                     {preview ? (
                         <div className="preview-container">
                             {file.type.startsWith('video/') ? <video src={preview} controls className="v-contain" /> : <img src={preview} alt="v" />}
@@ -86,6 +93,15 @@ const Create = () => {
                         <input type="checkbox" checked={isReel} onChange={e => setIsReel(e.target.checked)} />
                     </div>
                 )}
+
+                {uploading && (
+                    <div className="upload-progress-container">
+                        <div className="progress-bar-bg">
+                            <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }}></div>
+                        </div>
+                        <span>{uploadProgress}% yuklanmoqda...</span>
+                    </div>
+                )}
             </main>
 
             <BottomNav />
@@ -100,6 +116,7 @@ const Create = () => {
 
                 .create-content { padding: 0; }
                 .media-preview-box { width: 100%; aspect-ratio: 1; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+                .media-preview-box.is-video { aspect-ratio: 9/16; max-height: 70vh; }
                 .preview-container { width: 100%; height: 100%; position: relative; background: #000; }
                 .v-contain { width: 100%; height: 100%; object-fit: contain !important; }
                 .preview-container img { width: 100%; height: 100%; object-fit: cover; }
@@ -113,6 +130,11 @@ const Create = () => {
 
                 .toggle-section { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
                 .toggle-section span { font-weight: 600; }
+
+                .upload-progress-container { padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+                .progress-bar-bg { width: 100%; height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; }
+                .progress-bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+                .upload-progress-container span { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
                 
                 .spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

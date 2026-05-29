@@ -19,6 +19,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [savedPosts, setSavedPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('posts');
   const [uploading, setUploading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -32,7 +33,23 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
     fetchUserPosts();
+    if (isOwnProfile) fetchSavedPosts();
   }, [userId]);
+
+  const fetchSavedPosts = async () => {
+    try {
+      const res = await axios.get('/api/users/saved-posts');
+      setSavedPosts(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Postni o'chirishni istaysizmi?")) return;
+    try {
+      await axios.delete(`/api/posts/${postId}`);
+      setPosts(posts.filter(p => p._id !== postId));
+    } catch (err) { console.error(err); }
+  };
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -90,12 +107,34 @@ const Profile = () => {
     try {
       const res = await axios.post('/api/upload', form);
       setFormData({ ...formData, avatar: res.data.fileUrl });
+      // Update immediately
+      await axios.put('/api/users/me', { ...formData, avatar: res.data.fileUrl });
+      setUser({ ...user, avatar: res.data.fileUrl });
     } catch (err) { alert("Xatolik!"); }
+    finally { setUploading(false); }
+  };
+
+  const handleStoryUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const uploadRes = await axios.post('/api/upload', form);
+      await axios.post('/api/stories', {
+        fileUrl: uploadRes.data.fileUrl,
+        fileType: file.type.startsWith('video') ? 'video' : 'image'
+      });
+      alert("Story yuklandi!");
+    } catch (err) { alert("Story yuklashda xatolik!"); }
     finally { setUploading(false); }
   };
 
   if (loading) return <div className="loading-screen"><Loader className="spin" /></div>;
   if (!profileData) return <div className="error-screen">User Not Found</div>;
+
+  const storyInputRef = useRef(null);
 
   return (
     <div className="insta-profile">
@@ -110,11 +149,12 @@ const Profile = () => {
       <main className="profile-main">
         <section className="user-intro">
           <div className="avatar-section">
-            <div className="avatar-circle">
-                {profileData.avatar ? <img src={profileData.avatar} alt="v" /> : <span>{profileData.firstName[0]}</span>}
-                {isOwnProfile && <button className="add-story-btn" onClick={() => fileInputRef.current.click()}><Plus size={16} /></button>}
+            <div className={`avatar-circle ${uploading ? 'uploading' : ''}`}>
+                {profileData.avatar ? <img src={profileData.avatar} alt="v" onClick={() => isOwnProfile && fileInputRef.current.click()} /> : <span onClick={() => isOwnProfile && fileInputRef.current.click()}>{profileData.firstName[0]}</span>}
+                {isOwnProfile && <button className="add-story-btn" onClick={() => storyInputRef.current.click()}><Plus size={16} /></button>}
             </div>
-            <input type="file" ref={fileInputRef} hidden onChange={handleAvatarChange} />
+            <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleAvatarChange} />
+            <input type="file" ref={storyInputRef} hidden accept="image/*,video/*" onChange={handleStoryUpload} />
           </div>
 
           <div className="stats-section">
@@ -147,16 +187,21 @@ const Profile = () => {
         <div className="profile-tabs">
           <button className={activeTab === 'posts' ? 'active' : ''} onClick={() => setActiveTab('posts')}><Grid size={20} /></button>
           <button className={activeTab === 'reels' ? 'active' : ''} onClick={() => setActiveTab('reels')}><Video size={20} /></button>
+          {isOwnProfile && <button className={activeTab === 'saved' ? 'active' : ''} onClick={() => setActiveTab('saved')}><Save size={20} /></button>}
         </div>
 
         <div className="post-grid">
-          {posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel).map(post => (
+          {(activeTab === 'saved' ? savedPosts : posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel)).map(post => (
             <div key={post._id} className="grid-item" onClick={() => navigate(`/post/${post._id}`)}>
               {post.fileType === 'video' ? <video src={post.fileUrl} /> : <img src={post.fileUrl} alt="p" />}
               {post.isReel && <div className="reel-badge"><Video size={14} /></div>}
+              {isOwnProfile && activeTab === 'posts' && (
+                <button className="delete-post-btn" onClick={(e) => { e.stopPropagation(); handleDeletePost(post._id); }}><X size={14} /></button>
+              )}
             </div>
           ))}
-          {posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
+          {activeTab === 'posts' && posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
+          {activeTab === 'saved' && savedPosts.length === 0 && <div className="no-posts">Saqlanganlar yo'q</div>}
         </div>
       </main>
 
@@ -183,7 +228,8 @@ const Profile = () => {
         
         .user-intro { display: flex; align-items: center; gap: 30px; margin-bottom: 20px; }
         .avatar-section { position: relative; }
-        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--bg-secondary); border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; }
+        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--bg-secondary); border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; cursor: pointer; }
+        .avatar-circle.uploading { opacity: 0.5; animation: pulse 1s infinite; }
         .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
         .add-story-btn { position: absolute; bottom: 0; right: 0; background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-primary); }
         
@@ -209,6 +255,7 @@ const Profile = () => {
         .grid-item { aspect-ratio: 1; background: var(--bg-secondary); overflow: hidden; position: relative; }
         .grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; }
         .reel-badge { position: absolute; top: 8px; right: 8px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .delete-post-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
         .edit-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .edit-modal { background: var(--bg-primary); width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; }

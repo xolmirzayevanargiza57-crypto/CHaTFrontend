@@ -7,26 +7,45 @@ import { Heart, MessageCircle, Send, Music, Loader, Volume2, VolumeX } from 'luc
 import { useNavigate } from 'react-router-dom';
 
 const ReelItem = ({ post, user, onLike }) => {
-    const [isMuted, setIsMuted] = useState(true);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
     const videoRef = useRef(null);
+
+    useEffect(() => {
+        if (user && post.user && post.user.followers) {
+            setIsFollowing(post.user.followers.includes(user.id));
+        }
+    }, [user, post.user]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        videoRef.current.play().catch(e => console.log("Autoplay blocked"));
+                        videoRef.current.currentTime = 0;
+                        videoRef.current.play().catch(e => {
+                            console.log("Autoplay blocked, muting...");
+                            setIsMuted(true);
+                            videoRef.current.play();
+                        });
                     } else {
                         videoRef.current.pause();
                     }
                 });
             },
-            { threshold: 0.7 }
+            { threshold: 0.8 }
         );
 
         if (videoRef.current) observer.observe(videoRef.current);
         return () => observer.disconnect();
     }, []);
+
+    const handleFollow = async () => {
+        try {
+            const res = await axios.post(`/api/users/${post.user._id}/follow`);
+            setIsFollowing(res.data.isFollowing);
+        } catch (err) { console.error(err); }
+    };
 
     return (
         <div className="reel-video-container">
@@ -61,7 +80,11 @@ const ReelItem = ({ post, user, onLike }) => {
                     <div className="user-info">
                         <img src={post.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user.username}`} alt="u" />
                         <h3>{post.user.username}</h3>
-                        <button className="follow-badge">Follow</button>
+                        {post.user._id !== user.id && (
+                            <button className={`follow-badge ${isFollowing ? 'following' : ''}`} onClick={handleFollow}>
+                                {isFollowing ? 'Following' : 'Follow'}
+                            </button>
+                        )}
                     </div>
                     <p className="caption">{post.caption}</p>
                     <div className="audio-info">
@@ -113,11 +136,11 @@ const Reels = () => {
             <BottomNav />
 
             <style jsx="true">{`
-                .reels-page { background: #000; height: 100vh; width: 100vw; position: fixed; inset: 0; z-index: 2000; }
-                .reels-container { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+                .reels-page { background: #000; height: 100dvh; width: 100vw; position: fixed; inset: 0; z-index: 2000; }
+                .reels-container { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-snap-stop: always; scrollbar-width: none; }
                 .reels-container::-webkit-scrollbar { display: none; }
                 
-                .reel-video-container { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
+                .reel-video-container { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
                 video { width: 100%; height: 100%; object-fit: contain; }
                 
                 .reel-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 40%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 20px 100px; pointer-events: none; }
@@ -131,7 +154,8 @@ const Reels = () => {
                 .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
                 .user-info img { width: 34px; height: 34px; border-radius: 50%; border: 1px solid white; object-fit: cover; }
                 .user-info h3 { font-size: 0.95rem; font-weight: 800; margin: 0; }
-                .follow-badge { font-size: 0.8rem; font-weight: 700; background: transparent; border: 1px solid white !important; color: white; padding: 2px 10px; border-radius: 6px; }
+                .follow-badge { font-size: 0.8rem; font-weight: 700; background: transparent; border: 1px solid white !important; color: white; padding: 4px 12px; border-radius: 6px; transition: 0.2s; }
+                .follow-badge.following { background: rgba(255,255,255,0.2); border-color: transparent !important; }
                 
                 .caption { font-size: 0.9rem; margin-bottom: 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
                 .audio-info { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }

@@ -29,6 +29,9 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
   const [gifSearch, setGifSearch] = useState('');
   const [gifLoading, setGifLoading] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(null);
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const { user, lang } = useAuth();
   const t = translations[lang];
@@ -194,7 +197,6 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -218,6 +220,13 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
       socket.off('userStopTyping');
     };
   }, [friend, socket]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        uploadAndSend();
+    }
+  };
 
   const handleTextChange = (val) => {
     setText(val);
@@ -260,7 +269,11 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
             </p>
           </div>
         </div>
-        <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}><MoreVertical size={20} /></button>
+        {isSelecting ? (
+            <button className="icon-btn red" onClick={() => { onDeleteMessages(selectedMessages); setIsSelecting(false); setSelectedMessages([]); }}><Trash2 size={22} /></button>
+        ) : (
+            <button className="icon-btn" onClick={() => setShowMenu(!showMenu)}><MoreVertical size={20} /></button>
+        )}
         {showMenu && (
           <div className="dropdown-menu fade-in">
             <button className="menu-item red" onClick={() => { onClearForBoth(); setShowMenu(false); }}>
@@ -275,7 +288,11 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
 
       <div className="messages-area">
         {messages.map((msg, index) => (
-          <div key={msg._id || index} className={`message-wrapper ${msg.from === user.id ? 'sent' : 'received'}`}>
+          <div key={msg._id || index} 
+               className={`message-wrapper ${msg.from === user.id ? 'sent' : 'received'} ${selectedMessages.includes(msg._id) ? 'selected' : ''}`}
+               onClick={() => isSelecting && setSelectedMessages(prev => prev.includes(msg._id) ? prev.filter(id => id !== msg._id) : [...prev, msg._id])}
+               onContextMenu={(e) => { e.preventDefault(); setIsSelecting(true); setSelectedMessages([msg._id]); }}
+          >
             <div className={`message-bubble ${msg.isSticker ? 'sticker-msg' : ''} ${msg.isGif ? 'gif-msg' : ''} ${(msg.fileType === 'image' && !msg.text && !msg.isSticker) ? 'image-msg' : ''}`}>
               {msg.isGif && msg.fileUrl && (
                 <img src={msg.fileUrl} className="msg-gif" alt="GIF" />
@@ -433,12 +450,14 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
             <button type="button" className="icon-btn panel-toggle" onClick={() => setShowMediaPanel(!showMediaPanel)}>
                <Smile size={22} color={showMediaPanel ? 'var(--accent)' : 'currentColor'} />
             </button>
-            <input 
-              type="text" 
+            <textarea 
               placeholder={t.typeMessage} 
               value={text} 
               onChange={(e) => handleTextChange(e.target.value)}
+              onKeyDown={handleKeyDown}
               onFocus={() => setShowMediaPanel(false)}
+              rows="1"
+              className="chat-textarea"
             />
             <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} />
             {text.trim() || preview ? (
@@ -515,6 +534,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
         .message-wrapper { max-width: 80%; display: flex; flex-direction: column; }
         .message-wrapper.sent { align-self: flex-end; }
         .message-wrapper.received { align-self: flex-start; }
+        .message-wrapper.selected { background: rgba(135,116,225,0.1); border-radius: 10px; }
         
         .message-bubble { padding: 8px 14px; border-radius: 18px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
         .sent .message-bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
@@ -580,8 +600,9 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
 
         .input-area { padding: 12px 16px; background: var(--bg-primary); border-top: 1px solid var(--border); }
         .input-form { display: flex; align-items: center; gap: 10px; }
-        .input-form input[type="text"] { flex: 1; padding: 12px 18px; border-radius: 22px; background: var(--bg-secondary); border: none !important; color: var(--text-primary); font-size: 1rem; }
+        .chat-textarea { flex: 1; padding: 12px 18px; border-radius: 22px; background: var(--bg-secondary); border: none !important; color: var(--text-primary); font-size: 1rem; resize: none; max-height: 150px; font-family: inherit; line-height: 1.4; outline: none; }
         .icon-btn { color: var(--text-secondary); padding: 6px; border-radius: 50%; }
+        .icon-btn.red { color: #ff3b30; }
         .icon-btn:hover { color: var(--accent); background: rgba(135,116,225,0.08); }
         .send-btn, .mic-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; border: none !important; flex-shrink: 0; }
         .mic-btn { background: #34c759; cursor: pointer; }

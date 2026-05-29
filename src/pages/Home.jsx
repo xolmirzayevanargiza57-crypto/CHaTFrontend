@@ -13,6 +13,7 @@ const Home = () => {
     const [posts, setPosts] = useState([]);
     const [storyGroups, setStoryGroups] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [expandedPosts, setExpandedPosts] = useState({});
 
     useEffect(() => {
         fetchFeed();
@@ -58,7 +59,7 @@ const Home = () => {
                     <span>Your Story</span>
                 </div>
                 {storyGroups.map(group => (
-                    <div key={group.user._id} className="story-item" onClick={() => navigate('/chat')}>
+                    <div key={group.user._id} className="story-item" onClick={() => navigate(`/stories/${group.user._id}`)}>
                         <div className={`story-avatar ${group.stories.some(s => !s.hasViewed) ? 'unseen' : ''}`}>
                             <img src={group.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${group.user.username}`} alt="s" />
                         </div>
@@ -102,9 +103,17 @@ const Home = () => {
 
                         <div className="post-content">
                             <p className="likes-count"><b>{post.likes.length} likes</b></p>
-                            <p className="caption">
-                                <b>{post.user.username}</b> {post.caption}
-                            </p>
+                            <div className="caption">
+                                <b>{post.user.username}</b>
+                                {expandedPosts[post._id] || post.caption.length < 60 ? (
+                                    <span>{post.caption}</span>
+                                ) : (
+                                    <>
+                                        <span>{post.caption.slice(0, 60)}...</span>
+                                        <button className="more-btn" onClick={() => setExpandedPosts({...expandedPosts, [post._id]: true})}>more</button>
+                                    </>
+                                )}
+                            </div>
                             <button className="view-comments" onClick={() => navigate(`/post/${post._id}`)}>
                                 View all {post.comments.length} comments
                             </button>
@@ -152,8 +161,9 @@ const Home = () => {
 
                 .post-content { padding: 0 15px; display: flex; flex-direction: column; gap: 5px; }
                 .likes-count { font-size: 0.95rem; margin: 0; }
-                .caption { font-size: 0.95rem; margin: 0; line-height: 1.4; }
-                .caption b { margin-right: 6px; }
+                .caption { font-size: 0.95rem; margin: 0; line-height: 1.4; display: inline; }
+                .caption b { margin-right: 6px; cursor: pointer; }
+                .more-btn { background: transparent; border: none !important; color: var(--text-secondary); font-size: 0.9rem; padding: 0; margin-left: 5px; cursor: pointer; }
                 .view-comments { background: transparent; border: none !important; color: var(--text-secondary); font-size: 0.9rem; text-align: left; padding: 0; margin-top: 5px; }
                 .post-time { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 5px; }
             `}</style>

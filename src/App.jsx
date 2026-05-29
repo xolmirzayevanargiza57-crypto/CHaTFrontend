@@ -11,6 +11,7 @@ import SearchPage from './pages/Search';
 import Archive from './pages/Archive';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
+import Stories from './pages/Stories';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
@@ -32,6 +33,7 @@ const AppContent = () => {
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/stories/:userId" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

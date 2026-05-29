@@ -93,6 +93,13 @@ const Chat = () => {
         setFriends(prev => prev.some(f => f._id === newFriend._id) ? prev : [...prev, { ...newFriend, unreadCount: 1 }]);
     });
 
+    socket.on('friendProfileUpdated', (data) => {
+        setFriends(prev => prev.map(f => f._id === data.userId ? { ...f, ...data } : f));
+        if (selectedFriend?._id === data.userId) {
+            setSelectedFriend(prev => ({ ...prev, ...data }));
+        }
+    });
+
     return () => {
       socket.off('userOnline');
       socket.off('userOffline');
@@ -101,6 +108,7 @@ const Chat = () => {
       socket.off('messagesDeleted');
       socket.off('friendRemoved');
       socket.off('newFriend');
+      socket.off('friendProfileUpdated');
     };
   }, [user.id, selectedFriend, fetchFriends]);
 
