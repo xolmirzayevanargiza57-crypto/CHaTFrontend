@@ -40,7 +40,11 @@ const Stories = () => {
             axios.post(`/api/stories/${currentStory._id}/view`).catch(e => {});
         }
 
-        const duration = 5000; // 5 seconds per story
+        let duration = 5000;
+        if (currentStory.fileType === 'video') {
+            duration = 20000; // Give videos more time (20s)
+        }
+
         const interval = 100;
         let elapsed = 0;
 

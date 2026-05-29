@@ -178,7 +178,7 @@ const Home = () => {
 
                 .feed-container { flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; background: #000; }
                 .feed-container::-webkit-scrollbar { display: none; }
-                .post-card { scroll-snap-align: start; scroll-snap-stop: always; height: calc(100vh - 140px); background: #000; display: flex; flex-direction: column; position: relative; border-bottom: 0.5px solid #222; }
+                .post-card { scroll-snap-align: start; scroll-snap-stop: always; height: calc(100vh - 140px); background: #000; display: flex; flex-direction: column; position: relative; border-bottom: 0.5px solid #222; margin-bottom: 15px; border-radius: 12px; overflow: hidden; }
                 
                 .post-owner { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px; padding: 15px; cursor: pointer; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); z-index: 20; color: white; }
                 .post-owner .avatar { width: 40px; height: 40px; border-radius: 50%; background: #333; overflow: hidden; border: 1.5px solid white; }

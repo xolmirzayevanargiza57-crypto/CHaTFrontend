@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
-import { Search as SearchIcon, User, ChevronRight, Loader } from 'lucide-react';
+import { Search as SearchIcon, User, ChevronRight, Loader, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const SearchPage = () => {
@@ -52,15 +52,20 @@ const SearchPage = () => {
                     <div className="search-loading"><Loader className="spin" /></div>
                 ) : results.length > 0 ? (
                     results.map(user => (
-                        <div key={user._id} className="search-item" onClick={() => navigate(`/profile/${user._id}`)}>
-                            <div className="user-avatar">
-                                {user.avatar ? <img src={user.avatar} alt="v" /> : <span>{user.firstName[0]}</span>}
+                        <div key={user._id} className="search-item">
+                            <div className="avatar-wrap" onClick={() => navigate(`/profile/${user._id}`)}>
+                                <div className="user-avatar">
+                                    {user.avatar ? <img src={user.avatar} alt="v" /> : <span>{user.firstName[0]}</span>}
+                                </div>
+                                <div className="user-info">
+                                    <h4>{user.username}</h4>
+                                    <p>{user.firstName} {user.lastName}</p>
+                                </div>
                             </div>
-                            <div className="user-info">
-                                <h4>{user.username}</h4>
-                                <p>{user.firstName} {user.lastName}</p>
+                            <div className="search-actions">
+                                <button onClick={() => navigate('/chat')}><MessageSquare size={20} /></button>
+                                <ChevronRight size={20} className="arrow" onClick={() => navigate(`/profile/${user._id}`)} />
                             </div>
-                            <ChevronRight size={20} className="arrow" />
                         </div>
                     ))
                 ) : query.length > 1 ? (
@@ -83,14 +88,17 @@ const SearchPage = () => {
                 .s-icon { color: var(--text-secondary); }
 
                 .search-results { display: flex; flex-direction: column; }
-                .search-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+                .search-item { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: 0.2s; }
                 .search-item:hover { background: var(--bg-secondary); }
+                .avatar-wrap { display: flex; align-items: center; gap: 15px; flex: 1; cursor: pointer; }
                 .user-avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.2rem; overflow: hidden; border: 1px solid var(--border); }
                 .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
                 .user-info { flex: 1; }
                 .user-info h4 { margin: 0; font-size: 1rem; font-weight: 800; }
                 .user-info p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); }
-                .arrow { color: var(--text-secondary); }
+                .search-actions { display: flex; align-items: center; gap: 15px; }
+                .search-actions button { background: var(--bg-primary); padding: 8px; border-radius: 50%; color: var(--accent); }
+                .arrow { color: var(--text-secondary); cursor: pointer; }
 
                 .search-loading, .search-placeholder, .no-results { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; color: var(--text-secondary); gap: 15px; text-align: center; padding: 20px; }
                 .spin { animation: spin 1s linear infinite; }

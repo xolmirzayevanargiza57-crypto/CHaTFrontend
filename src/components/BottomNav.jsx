@@ -15,8 +15,8 @@ const BottomNav = () => {
             <button className={location.pathname === '/profile' ? 'active' : ''} onClick={() => navigate('/profile')}><User size={26} /></button>
 
             <style jsx="true">{`
-                .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: 60px; background: var(--bg-primary); border-top: 1px solid var(--border); border-left: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-                .bottom-nav button { background: transparent; border: none !important; color: var(--text-primary); opacity: 0.6; transition: 0.2s; }
+                .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: 60px; background: var(--bg-primary); border: 1px solid var(--border); border-bottom: none; display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
+                .bottom-nav button { background: transparent; border: none !important; color: var(--text-primary); opacity: 0.6; transition: 0.2s; padding: 10px; }
                 .bottom-nav button.active { opacity: 1; transform: scale(1.1); }
                 .create-btn { color: var(--accent) !important; opacity: 1 !important; }
             `}</style>
