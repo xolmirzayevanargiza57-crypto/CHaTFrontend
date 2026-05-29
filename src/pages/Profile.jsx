@@ -2,20 +2,196 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
-import { 
-  Edit2, Calendar, ChevronLeft, Save, X, Camera, 
-  Info, AtSign, CheckCircle2, MessageSquare, Loader, Upload, 
-  Image as ImageIcon, Grid, Video, Heart, Settings, Archive, Plus, Trash2
+import {
+  Grid, Video, Loader, X, Settings, Plus, Trash2,
+  Camera, Lock, Eye, EyeOff, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+/* ─────────────────────────── EDIT MODAL ─────────────────────────── */
+const EditProfileModal = ({ profileData, onClose, onSaved }) => {
+  const { setUser, user } = useAuth();
+  const [tab, setTab] = useState('profile'); // 'profile' | 'password'
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState({ text: '', type: '' }); // type: 'ok'|'err'
+
+  // Profile fields
+  const [form, setForm] = useState({
+    username: profileData.username || '',
+    firstName: profileData.firstName || '',
+    lastName: profileData.lastName || '',
+    bio: profileData.bio || '',
+  });
+
+  // Password fields
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [showPw, setShowPw] = useState({ current: false, newPw: false, confirm: false });
+
+  const showMsg = (text, type = 'ok') => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg({ text: '', type: '' }), 3000);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!form.username.trim()) return showMsg("Username bo'sh bo'lishi mumkin emas", 'err');
+    const usernameRegex = /^[a-zA-Z0-9._]+$/;
+    if (!usernameRegex.test(form.username)) {
+      return showMsg("Username faqat harf, raqam, . va _ bo'lishi mumkin", 'err');
+    }
+    setSaving(true);
+    try {
+      const res = await axios.put('/api/users/me', form);
+      setUser({ ...user, ...res.data });
+      onSaved(res.data);
+      showMsg("Profil saqlandi ✓", 'ok');
+    } catch (err) {
+      showMsg(err.response?.data?.message || "Xatolik yuz berdi", 'err');
+    } finally { setSaving(false); }
+  };
+
+  const handleSavePassword = async () => {
+    if (!pwForm.current) return showMsg("Joriy parolni kiriting", 'err');
+    if (pwForm.newPw.length < 6) return showMsg("Yangi parol kamida 6 ta belgi", 'err');
+    if (pwForm.newPw !== pwForm.confirm) return showMsg("Parollar mos emas", 'err');
+    setSaving(true);
+    try {
+      await axios.put('/api/users/me/password', {
+        currentPassword: pwForm.current,
+        newPassword: pwForm.newPw
+      });
+      setPwForm({ current: '', newPw: '', confirm: '' });
+      showMsg("Parol muvaffaqiyatli o'zgartirildi ✓", 'ok');
+    } catch (err) {
+      showMsg(err.response?.data?.message || "Joriy parol noto'g'ri", 'err');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="ep-overlay" onClick={onClose}>
+      <div className="ep-modal" onClick={e => e.stopPropagation()}>
+        <div className="ep-modal-header">
+          <h3>Edit Profile</h3>
+          <button onClick={onClose}><X size={22} /></button>
+        </div>
+
+        {/* Tabs */}
+        <div className="ep-tabs">
+          <button
+            className={tab === 'profile' ? 'active' : ''}
+            onClick={() => setTab('profile')}
+          >
+            Profile Info
+          </button>
+          <button
+            className={tab === 'password' ? 'active' : ''}
+            onClick={() => setTab('password')}
+          >
+            <Lock size={14} /> Change Password
+          </button>
+        </div>
+
+        {/* Message */}
+        {msg.text && (
+          <div className={`ep-msg ${msg.type}`}>
+            {msg.type === 'ok' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+            {msg.text}
+          </div>
+        )}
+
+        {/* Profile Tab */}
+        {tab === 'profile' && (
+          <div className="ep-body">
+            <div className="ep-field">
+              <label>Username</label>
+              <div className="ep-input-wrap">
+                <span className="ep-prefix">@</span>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s/g, '_') })}
+                  placeholder="username"
+                />
+              </div>
+            </div>
+            <div className="ep-field">
+              <label>First Name</label>
+              <input
+                type="text"
+                value={form.firstName}
+                onChange={e => setForm({ ...form, firstName: e.target.value })}
+                placeholder="First name"
+              />
+            </div>
+            <div className="ep-field">
+              <label>Last Name</label>
+              <input
+                type="text"
+                value={form.lastName}
+                onChange={e => setForm({ ...form, lastName: e.target.value })}
+                placeholder="Last name"
+              />
+            </div>
+            <div className="ep-field">
+              <label>Bio</label>
+              <textarea
+                value={form.bio}
+                onChange={e => setForm({ ...form, bio: e.target.value })}
+                placeholder="Write something about yourself..."
+                rows={3}
+                maxLength={150}
+              />
+              <span className="ep-counter">{form.bio.length}/150</span>
+            </div>
+            <button className="ep-save-btn" onClick={handleSaveProfile} disabled={saving}>
+              {saving ? <Loader size={16} className="spin" /> : 'Save Changes'}
+            </button>
+          </div>
+        )}
+
+        {/* Password Tab */}
+        {tab === 'password' && (
+          <div className="ep-body">
+            {[
+              { key: 'current', label: 'Current Password', placeholder: 'Enter current password' },
+              { key: 'newPw', label: 'New Password', placeholder: 'At least 6 characters' },
+              { key: 'confirm', label: 'Confirm New Password', placeholder: 'Repeat new password' },
+            ].map(f => (
+              <div className="ep-field" key={f.key}>
+                <label>{f.label}</label>
+                <div className="ep-input-wrap">
+                  <input
+                    type={showPw[f.key] ? 'text' : 'password'}
+                    value={pwForm[f.key]}
+                    onChange={e => setPwForm({ ...pwForm, [f.key]: e.target.value })}
+                    placeholder={f.placeholder}
+                  />
+                  <button
+                    className="ep-eye"
+                    onClick={() => setShowPw({ ...showPw, [f.key]: !showPw[f.key] })}
+                    type="button"
+                  >
+                    {showPw[f.key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button className="ep-save-btn" onClick={handleSavePassword} disabled={saving}>
+              {saving ? <Loader size={16} className="spin" /> : 'Update Password'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────── MAIN PROFILE ─────────────────────────── */
 const Profile = () => {
   const { user, setUser, lang } = useAuth();
   const { userId } = useParams();
   const t = translations[lang];
   const navigate = useNavigate();
-  
-  const [isEditing, setIsEditing] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -23,29 +199,17 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '', lastName: '', avatar: '', bio: '', username: ''
-  });
   const [selectedPost, setSelectedPost] = useState(null);
-  
+  const [showEditModal, setShowEditModal] = useState(false);
+
   const fileInputRef = useRef(null);
   const storyInputRef = useRef(null);
-  const isOwnProfile = !userId || userId === user.id;
+  const isOwnProfile = !userId || userId === user?.id;
 
   useEffect(() => {
     fetchProfile();
     fetchUserPosts();
   }, [userId]);
-
-
-
-  const handleDeletePost = async (postId) => {
-    if (!window.confirm("Postni o'chirishni istaysizmi?")) return;
-    try {
-      await axios.delete(`/api/posts/${postId}`);
-      setPosts(posts.filter(p => p._id !== postId));
-    } catch (err) { console.error(err); }
-  };
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -54,13 +218,6 @@ const Profile = () => {
       const res = await axios.get(`/api/users/profile/${targetId}`);
       setProfileData(res.data);
       setIsFollowing(res.data.followers?.includes(user.id));
-      setFormData({
-        firstName: res.data.firstName,
-        lastName: res.data.lastName,
-        avatar: res.data.avatar || '',
-        bio: res.data.bio || '',
-        username: res.data.username || ''
-      });
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -79,25 +236,19 @@ const Profile = () => {
       setIsFollowing(res.data.isFollowing);
       setProfileData(prev => ({
         ...prev,
-        followers: res.data.isFollowing 
-          ? [...prev.followers, user.id] 
+        followers: res.data.isFollowing
+          ? [...prev.followers, user.id]
           : prev.followers.filter(id => id !== user.id)
       }));
     } catch (err) { console.error(err); }
   };
 
-  const handleUpdate = async () => {
-    // Only alphanumeric and _ . allowed
-    const usernameRegex = /^[a-zA-Z0-0._]+$/;
-    if (formData.username && !usernameRegex.test(formData.username)) {
-      alert("Username faqat harf, raqam va . _ belgilaridan iborat bo'lishi kerak!");
-      return;
-    }
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Postni o'chirishni istaysizmi?")) return;
     try {
-      const response = await axios.put('/api/users/me', formData);
-      setUser({ ...user, ...response.data });
-      setProfileData(response.data);
-      setIsEditing(false);
+      await axios.delete(`/api/posts/${postId}`);
+      setPosts(posts.filter(p => p._id !== postId));
+      setSelectedPost(null);
     } catch (err) { console.error(err); }
   };
 
@@ -111,10 +262,11 @@ const Profile = () => {
       const res = await axios.post('/api/upload', form, {
         onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / p.total))
       });
-      setFormData({ ...formData, avatar: res.data.fileUrl });
-      await axios.put('/api/users/me', { ...formData, avatar: res.data.fileUrl });
+      const updated = { ...profileData, avatar: res.data.fileUrl };
+      await axios.put('/api/users/me', { avatar: res.data.fileUrl });
       setUser({ ...user, avatar: res.data.fileUrl });
-    } catch (err) { alert("Xatolik!"); }
+      setProfileData(updated);
+    } catch { alert("Xatolik!"); }
     finally { setUploading(false); setUploadProgress(0); }
   };
 
@@ -133,189 +285,631 @@ const Profile = () => {
         fileType: file.type.startsWith('video') ? 'video' : 'image'
       });
       alert("Story yuklandi!");
-    } catch (err) { alert("Story yuklashda xatolik!"); }
+    } catch { alert("Story yuklashda xatolik!"); }
     finally { setUploading(false); setUploadProgress(0); }
   };
 
-  if (loading) return <div className="loading-screen"><Loader className="spin" /></div>;
+  if (loading) return <div className="loading-screen"><Loader className="spin" size={32} /></div>;
   if (!profileData) return <div className="error-screen">User Not Found</div>;
 
-
+  const displayedPosts = posts.filter(p => activeTab === 'reels' ? p.isReel || p.fileType === 'video' : !p.isReel);
 
   return (
     <div className="insta-profile">
-      <header className="profile-header">
-        <button onClick={() => navigate(-1)} className="back-link"><ChevronLeft size={24} /></button>
-        <h2 className="username-title">{profileData.username}</h2>
-        <div className="header-icons">
-          {isOwnProfile && <button onClick={() => navigate('/settings')}><Settings size={22} /></button>}
-        </div>
+      {/* ── Header ── */}
+      <header className="ip-header">
+        <h2 className="ip-username">@{profileData.username}</h2>
+        {isOwnProfile && (
+          <button className="ip-settings-btn" onClick={() => navigate('/settings')}>
+            <Settings size={22} />
+          </button>
+        )}
       </header>
 
-      <main className="profile-main">
-        <section className="user-intro">
-          <div className="avatar-section">
-            <div className={`avatar-circle ${uploading ? 'uploading' : ''}`}>
-                {profileData.avatar ? <img src={profileData.avatar} alt="v" onClick={() => isOwnProfile && fileInputRef.current.click()} /> : <span onClick={() => isOwnProfile && fileInputRef.current.click()}>{profileData.firstName[0]}</span>}
-                {isOwnProfile && <button className="add-story-btn" onClick={() => storyInputRef.current.click()}><Plus size={16} /></button>}
+      <main className="ip-main">
+        {/* ── User Intro Row ── */}
+        <section className="ip-intro">
+          {/* Avatar */}
+          <div className="ip-avatar-wrap">
+            <div
+              className={`ip-avatar ${uploading ? 'uploading' : ''}`}
+              onClick={() => isOwnProfile && fileInputRef.current.click()}
+            >
+              {profileData.avatar
+                ? <img src={profileData.avatar} alt="avatar" />
+                : <span>{profileData.firstName?.[0] || profileData.username?.[0]}</span>
+              }
+              {uploading && (
+                <div className="ip-avatar-overlay">
+                  <Loader size={20} className="spin" color="white" />
+                  <span>{uploadProgress}%</span>
+                </div>
+              )}
             </div>
+            {isOwnProfile && (
+              <button
+                className="ip-story-add"
+                onClick={() => storyInputRef.current.click()}
+                title="Add story"
+              >
+                <Plus size={14} strokeWidth={3} />
+              </button>
+            )}
             <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleAvatarChange} />
             <input type="file" ref={storyInputRef} hidden accept="image/*,video/*" onChange={handleStoryUpload} />
           </div>
 
-          <div className="stats-section">
-             <div className="stat-item"><b>{posts.length}</b> <span>{t.posts}</span></div>
-             <div className="stat-item"><b>{profileData.followers?.length || 0}</b> <span>{t.followers}</span></div>
-             <div className="stat-item"><b>{profileData.following?.length || 0}</b> <span>{t.following}</span></div>
-          </div>
-          {uploading && (
-            <div className="upload-progress-bar">
-               <div className="fill" style={{width: `${uploadProgress}%`}}></div>
-               <span>{uploadProgress}% yuklanmoqda...</span>
+          {/* Stats */}
+          <div className="ip-stats">
+            <div className="ip-stat">
+              <b>{posts.length}</b>
+              <span>posts</span>
             </div>
-          )}
-        </section>
-
-        <section className="bio-section">
-          <h1 className="display-name">{profileData.firstName} {profileData.lastName}</h1>
-          <p className="bio-text">{profileData.bio || 'Social user'}</p>
-          <div className="profile-actions">
-            {isOwnProfile ? (
-              <>
-                <button className="action-btn secondary" onClick={() => setIsEditing(true)}>{t.editProfile}</button>
-                <button className="action-btn secondary" onClick={() => navigate('/archive')}>{t.viewArchive}</button>
-              </>
-            ) : (
-                <button 
-                  className={`action-btn ${isFollowing ? 'secondary' : 'primary'}`} 
-                  onClick={handleFollow}
-                >
-                  {isFollowing ? t.unfollow : t.follow}
-                </button>
-            )}
+            <div className="ip-stat">
+              <b>{profileData.followers?.length || 0}</b>
+              <span>followers</span>
+            </div>
+            <div className="ip-stat">
+              <b>{profileData.following?.length || 0}</b>
+              <span>following</span>
+            </div>
           </div>
         </section>
 
-        <div className="profile-tabs">
-          <button className={activeTab === 'posts' ? 'active' : ''} onClick={() => setActiveTab('posts')}><Grid size={20} /></button>
-          <button className={activeTab === 'reels' ? 'active' : ''} onClick={() => setActiveTab('reels')}><Video size={20} /></button>
+        {/* ── Bio ── */}
+        <section className="ip-bio">
+          <h1 className="ip-name">{profileData.firstName} {profileData.lastName}</h1>
+          {profileData.bio && <p className="ip-bio-text">{profileData.bio}</p>}
+        </section>
+
+        {/* ── Action Buttons ── */}
+        <div className="ip-actions">
+          {isOwnProfile ? (
+            <>
+              <button className="ip-btn secondary" onClick={() => setShowEditModal(true)}>
+                Edit profile
+              </button>
+              <button className="ip-btn secondary" onClick={() => navigate('/archive')}>
+                Archive
+              </button>
+            </>
+          ) : (
+            <button
+              className={`ip-btn ${isFollowing ? 'secondary' : 'primary'}`}
+              onClick={handleFollow}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+          )}
         </div>
 
-        <div className="post-grid">
-          {posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel).map(post => (
-            <div key={post._id} className="grid-item" onClick={() => setSelectedPost(post)}>
-              {post.fileType === 'video' ? <video src={post.fileUrl} muted /> : <img src={post.fileUrl} alt="p" />}
-              {post.isReel && <div className="reel-badge"><Video size={14} /></div>}
+        {/* ── Tabs ── */}
+        <div className="ip-tabs">
+          <button
+            className={activeTab === 'posts' ? 'active' : ''}
+            onClick={() => setActiveTab('posts')}
+          >
+            <Grid size={20} />
+          </button>
+          <button
+            className={activeTab === 'reels' ? 'active' : ''}
+            onClick={() => setActiveTab('reels')}
+          >
+            <Video size={20} />
+          </button>
+        </div>
+
+        {/* ── Post Grid ── */}
+        <div className="ip-grid">
+          {displayedPosts.map(post => (
+            <div key={post._id} className="ip-grid-item" onClick={() => setSelectedPost(post)}>
+              {post.fileType === 'video'
+                ? <video src={post.fileUrl} muted preload="metadata" />
+                : <img src={post.fileUrl} alt="" loading="lazy" />
+              }
+              {(post.isReel || post.fileType === 'video') && (
+                <div className="ip-reel-indicator"><Video size={14} /></div>
+              )}
+              {isOwnProfile && (
+                <button
+                  className="ip-grid-delete"
+                  onClick={e => { e.stopPropagation(); handleDeletePost(post._id); }}
+                  title="Delete"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
             </div>
           ))}
-          {posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
+          {displayedPosts.length === 0 && (
+            <div className="ip-empty">
+              {activeTab === 'posts' ? <Grid size={40} opacity={0.3} /> : <Video size={40} opacity={0.3} />}
+              <p>No {activeTab} yet</p>
+            </div>
+          )}
         </div>
       </main>
 
+      {/* ── Post Preview Modal ── */}
       {selectedPost && (
-        <div className="post-preview-overlay" onClick={() => setSelectedPost(null)}>
-          <div className="post-preview-modal" onClick={e => e.stopPropagation()}>
-            <button className="close-preview" onClick={() => setSelectedPost(null)}><X size={28} /></button>
-            <div className="preview-media">
-               {selectedPost.fileType === 'video' ? <video src={selectedPost.fileUrl} controls autoPlay loop /> : <img src={selectedPost.fileUrl} alt="p" />}
+        <div className="ip-preview-overlay" onClick={() => setSelectedPost(null)}>
+          <div className="ip-preview-modal" onClick={e => e.stopPropagation()}>
+            <button className="ip-preview-close" onClick={() => setSelectedPost(null)}>
+              <X size={26} />
+            </button>
+
+            <div className="ip-preview-media">
+              {selectedPost.fileType === 'video'
+                ? <video src={selectedPost.fileUrl} controls autoPlay loop />
+                : <img src={selectedPost.fileUrl} alt="" />
+              }
             </div>
-            <div className="preview-sidebar">
-               <div className="preview-owner">
-                  <img src={profileData?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profileData?.username}`} alt="v" />
-                  <b>{profileData?.username}</b>
-                  {isOwnProfile && <button className="del-btn" onClick={() => { handleDeletePost(selectedPost._id); setSelectedPost(null); }}><Trash2 size={22} /></button>}
-               </div>
-               <div className="preview-content">
-                  <p>{selectedPost.caption}</p>
-                  <span>{new Date(selectedPost.createdAt).toLocaleString()}</span>
-               </div>
+
+            <div className="ip-preview-sidebar">
+              <div className="ip-preview-owner">
+                <img
+                  src={profileData.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profileData.username}`}
+                  alt=""
+                />
+                <b>{profileData.username}</b>
+                {isOwnProfile && (
+                  <button
+                    className="ip-delete-btn"
+                    onClick={() => handleDeletePost(selectedPost._id)}
+                    title="Delete post"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
+              </div>
+              <div className="ip-preview-caption">
+                <p>{selectedPost.caption}</p>
+                <span>{new Date(selectedPost.createdAt).toLocaleString()}</span>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {isEditing && (
-        <div className="edit-modal-overlay">
-          <div className="edit-modal">
-            <h3>{t.editProfile}</h3>
-            <input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toLowerCase().replace(/\s/g, '_')})} placeholder="Username" />
-            <input type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder={t.firstName} />
-            <input type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder={t.lastName} />
-            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} placeholder="Bio..." rows="4"></textarea>
-            <div className="modal-btns">
-              <button onClick={() => setIsEditing(false)}>{t.cancel}</button>
-              <button className="save" onClick={handleUpdate}>{t.save}</button>
-            </div>
-          </div>
-        </div>
+      {/* ── Edit Profile Modal ── */}
+      {showEditModal && (
+        <EditProfileModal
+          profileData={profileData}
+          onClose={() => setShowEditModal(false)}
+          onSaved={(updated) => {
+            setProfileData(prev => ({ ...prev, ...updated }));
+            setShowEditModal(false);
+          }}
+        />
       )}
 
       <style jsx="true">{`
-        .insta-profile { width: 100%; max-width: 600px; margin: 0 auto; background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; }
-        .profile-header { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-primary); z-index: 100; }
-        .username-title { flex: 1; text-align: center; font-size: 1.1rem; font-weight: 800; }
-        .profile-main { padding: 20px; }
-        
-        .user-intro { display: flex; align-items: center; gap: 30px; margin-bottom: 20px; }
-        .avatar-section { position: relative; }
-        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--bg-secondary); border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; cursor: pointer; }
-        .avatar-circle.uploading { opacity: 0.5; animation: pulse 1s infinite; }
-        .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
-        .add-story-btn { position: absolute; bottom: 0; right: 0; background: var(--accent); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-primary); }
-        
-        .stats-section { flex: 1; display: flex; justify-content: space-around; }
-        .stat-item { display: flex; flex-direction: column; align-items: center; }
-        .stat-item b { font-size: 1.1rem; }
-        .stat-item span { font-size: 0.85rem; color: var(--text-secondary); }
+        .insta-profile {
+          width: 100%;
+          max-width: 935px;
+          margin: 0 auto;
+          background: var(--bg-primary);
+          min-height: 100vh;
+          padding-bottom: 40px;
+        }
 
-        .bio-section { margin-bottom: 20px; }
-        .display-name { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
-        .bio-text { font-size: 0.95rem; color: var(--text-primary); line-height: 1.4; white-space: pre-wrap; }
-        
-        .profile-actions { display: flex; gap: 8px; margin-top: 15px; }
-        .action-btn { flex: 1; padding: 10px; border-radius: 10px; font-weight: 700; border: none !important; font-size: 0.9rem; }
-        .action-btn.primary { background: var(--accent); color: white; }
-        .action-btn.secondary { background: var(--bg-secondary); color: var(--text-primary); }
+        /* Header */
+        .ip-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 24px 8px;
+          border-bottom: 1px solid var(--border);
+          position: sticky;
+          top: 0;
+          background: var(--bg-primary);
+          z-index: 100;
+        }
+        .ip-username {
+          font-size: 1.15rem;
+          font-weight: 700;
+        }
+        .ip-settings-btn {
+          color: var(--text-primary);
+          padding: 6px;
+          border-radius: 8px;
+          transition: background 0.15s;
+        }
+        .ip-settings-btn:hover { background: var(--bg-secondary); }
 
-        .profile-tabs { display: flex; border-top: 1px solid var(--border); margin-top: 20px; }
-        .profile-tabs button { flex: 1; padding: 15px; border: none !important; background: transparent; color: var(--text-secondary); opacity: 0.5; }
-        .profile-tabs button.active { color: var(--text-primary); opacity: 1; border-top: 2px solid var(--text-primary) !important; border-radius: 0; }
+        /* Intro */
+        .ip-main { padding: 24px 24px 0; }
+        .ip-intro {
+          display: flex;
+          align-items: center;
+          gap: 40px;
+          margin-bottom: 18px;
+        }
 
-        .post-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
-        .grid-item { aspect-ratio: 1; background: var(--bg-secondary); overflow: hidden; position: relative; }
-        .grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; }
-        .reel-badge { position: absolute; top: 8px; right: 8px; color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .delete-post-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        
-        .edit-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .edit-modal { background: var(--bg-primary); width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .edit-modal input, .edit-modal textarea { padding: 12px; border-radius: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
-        .modal-btns { display: flex; gap: 10px; }
-        .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 800; border: none !important; }
-        .modal-btns .save { background: var(--accent); color: white; }
+        /* Avatar */
+        .ip-avatar-wrap { position: relative; flex-shrink: 0; }
+        .ip-avatar {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          background: var(--bg-secondary);
+          border: 2px solid var(--border);
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2.4rem;
+          font-weight: 800;
+          cursor: pointer;
+          position: relative;
+          transition: opacity 0.2s;
+        }
+        .ip-avatar:hover { opacity: 0.85; }
+        .ip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .ip-avatar-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.55);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          color: white;
+          font-size: 0.7rem;
+          font-weight: 700;
+          border-radius: 50%;
+        }
+        .ip-avatar.uploading { cursor: not-allowed; }
 
-        .upload-progress-bar { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-primary); padding: 10px 20px; border-radius: 20px; border: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; gap: 10px; width: 80%; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .upload-progress-bar .fill { height: 4px; background: var(--accent); border-radius: 2px; flex: 1; transition: width 0.3s; }
-        .upload-progress-bar span { font-size: 0.8rem; font-weight: 800; color: var(--accent); }
+        .ip-story-add {
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: var(--accent);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid var(--bg-primary);
+          transition: transform 0.15s;
+        }
+        .ip-story-add:hover { transform: scale(1.1); }
 
-        .post-preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .post-preview-modal { background: var(--bg-primary); width: 100%; max-width: 900px; height: 80vh; display: flex; border-radius: 12px; overflow: hidden; position: relative; }
-        .close-preview { position: absolute; top: 15px; right: 15px; color: white; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .preview-media { flex: 1.5; background: #000; display: flex; align-items: center; justify-content: center; }
-        .preview-media img, .preview-media video { width: 100%; height: 100%; object-fit: contain; }
-        .preview-sidebar { flex: 1; display: flex; flex-direction: column; border-left: 1px solid var(--border); background: var(--bg-primary); }
-        .preview-owner { padding: 15px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
-        .preview-owner img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
-        .preview-owner b { font-size: 0.95rem; flex: 1; }
-        .del-btn { color: #ff3b30; }
-        .preview-content { padding: 15px; flex: 1; overflow-y: auto; }
-        .preview-content p { font-size: 0.95rem; line-height: 1.5; margin-bottom: 10px; }
-        .preview-content span { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+        /* Stats */
+        .ip-stats {
+          flex: 1;
+          display: flex;
+          justify-content: space-around;
+          gap: 20px;
+        }
+        .ip-stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+        }
+        .ip-stat b { font-size: 1.15rem; font-weight: 700; }
+        .ip-stat span { font-size: 0.87rem; color: var(--text-secondary); }
 
+        /* Bio */
+        .ip-bio { margin-bottom: 14px; }
+        .ip-name { font-size: 0.97rem; font-weight: 700; margin-bottom: 4px; }
+        .ip-bio-text { font-size: 0.95rem; line-height: 1.45; white-space: pre-wrap; color: var(--text-primary); }
+
+        /* Actions */
+        .ip-actions { display: flex; gap: 8px; margin-bottom: 18px; }
+        .ip-btn {
+          flex: 1;
+          padding: 8px 14px;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 0.9rem;
+          border: none !important;
+          transition: opacity 0.15s;
+        }
+        .ip-btn:hover { opacity: 0.85; }
+        .ip-btn.primary { background: var(--accent); color: white; }
+        .ip-btn.secondary { background: var(--bg-secondary); color: var(--text-primary); }
+
+        /* Tabs */
+        .ip-tabs {
+          display: flex;
+          border-top: 1px solid var(--border);
+          margin: 10px -24px 0;
+        }
+        .ip-tabs button {
+          flex: 1;
+          padding: 14px;
+          border: none !important;
+          background: transparent;
+          color: var(--text-secondary);
+          opacity: 0.5;
+          transition: opacity 0.15s;
+        }
+        .ip-tabs button.active {
+          color: var(--text-primary);
+          opacity: 1;
+          border-top: 2px solid var(--text-primary) !important;
+        }
+
+        /* Grid */
+        .ip-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 3px;
+          margin: 3px -24px 0;
+        }
+        .ip-grid-item {
+          aspect-ratio: 1;
+          position: relative;
+          overflow: hidden;
+          background: var(--bg-secondary);
+          cursor: pointer;
+        }
+        .ip-grid-item img, .ip-grid-item video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.2s;
+        }
+        .ip-grid-item:hover img, .ip-grid-item:hover video { transform: scale(1.04); }
+
+        .ip-reel-indicator {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          color: white;
+          filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+        }
+        .ip-grid-delete {
+          position: absolute;
+          top: 6px;
+          left: 6px;
+          background: rgba(0,0,0,0.6);
+          color: white;
+          border-radius: 50%;
+          width: 26px;
+          height: 26px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+        .ip-grid-item:hover .ip-grid-delete { opacity: 1; }
+
+        .ip-empty {
+          grid-column: 1 / -1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 60px 20px;
+          gap: 12px;
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+        }
+
+        /* Post Preview */
+        .ip-preview-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.85);
+          z-index: 3000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+        }
+        .ip-preview-modal {
+          background: var(--bg-primary);
+          width: 100%;
+          max-width: 900px;
+          height: 82vh;
+          display: flex;
+          border-radius: 12px;
+          overflow: hidden;
+          position: relative;
+        }
+        .ip-preview-close {
+          position: absolute;
+          top: -40px;
+          right: 0;
+          color: white;
+          background: rgba(255,255,255,0.15);
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .ip-preview-media {
+          flex: 1.5;
+          background: #000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        .ip-preview-media img, .ip-preview-media video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+        .ip-preview-sidebar {
+          width: 340px;
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          border-left: 1px solid var(--border);
+        }
+        .ip-preview-owner {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 16px;
+          border-bottom: 1px solid var(--border);
+        }
+        .ip-preview-owner img {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 1px solid var(--border);
+        }
+        .ip-preview-owner b { flex: 1; font-size: 0.95rem; }
+        .ip-delete-btn {
+          color: #ed4956;
+          padding: 6px;
+          border-radius: 50%;
+          transition: background 0.15s;
+        }
+        .ip-delete-btn:hover { background: rgba(237,73,86,0.1); }
+        .ip-preview-caption {
+          padding: 16px;
+          flex: 1;
+          overflow-y: auto;
+        }
+        .ip-preview-caption p { font-size: 0.93rem; line-height: 1.5; margin-bottom: 8px; }
+        .ip-preview-caption span { font-size: 0.75rem; color: var(--text-secondary); }
+
+        /* Edit Modal */
+        .ep-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.75);
+          z-index: 4000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .ep-modal {
+          background: var(--bg-primary);
+          width: 100%;
+          max-width: 440px;
+          border-radius: 18px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .ep-modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 18px 20px;
+          border-bottom: 1px solid var(--border);
+        }
+        .ep-modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+        .ep-modal-header button { color: var(--text-secondary); padding: 4px; border-radius: 50%; }
+        .ep-modal-header button:hover { background: var(--bg-secondary); }
+
+        .ep-tabs {
+          display: flex;
+          border-bottom: 1px solid var(--border);
+        }
+        .ep-tabs button {
+          flex: 1;
+          padding: 12px 10px;
+          font-size: 0.87rem;
+          font-weight: 500;
+          color: var(--text-secondary);
+          border-bottom: 2px solid transparent !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          transition: all 0.15s;
+        }
+        .ep-tabs button.active {
+          color: var(--text-primary);
+          border-bottom-color: var(--text-primary) !important;
+          font-weight: 700;
+        }
+
+        .ep-msg {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          font-size: 0.87rem;
+          font-weight: 500;
+        }
+        .ep-msg.ok { background: rgba(0, 180, 90, 0.1); color: #00b45a; }
+        .ep-msg.err { background: rgba(237, 73, 86, 0.1); color: #ed4956; }
+
+        .ep-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+
+        .ep-field { display: flex; flex-direction: column; gap: 5px; }
+        .ep-field label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .ep-input-wrap { position: relative; display: flex; align-items: center; }
+        .ep-prefix {
+          position: absolute;
+          left: 12px;
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+          pointer-events: none;
+        }
+        .ep-input-wrap input { padding-left: 28px !important; }
+        .ep-eye {
+          position: absolute;
+          right: 10px;
+          color: var(--text-secondary);
+          padding: 4px;
+        }
+        .ep-eye:hover { color: var(--text-primary); }
+
+        .ep-field input, .ep-field textarea {
+          width: 100%;
+          padding: 11px 14px;
+          border-radius: 10px;
+          background: var(--bg-secondary);
+          border: 1.5px solid var(--border) !important;
+          color: var(--text-primary);
+          font-size: 0.95rem;
+          transition: border-color 0.15s;
+        }
+        .ep-field input:focus, .ep-field textarea:focus {
+          border-color: var(--accent) !important;
+          outline: none;
+        }
+        .ep-field textarea { resize: vertical; font-family: inherit; line-height: 1.4; }
+        .ep-counter { font-size: 0.75rem; color: var(--text-secondary); text-align: right; margin-top: -10px; }
+
+        .ep-save-btn {
+          padding: 12px;
+          background: var(--accent);
+          color: white;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: opacity 0.15s;
+          margin-top: 4px;
+        }
+        .ep-save-btn:hover { opacity: 0.88; }
+        .ep-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Responsive */
         @media (max-width: 768px) {
-          .post-preview-modal { flex-direction: column; height: 90vh; }
-          .preview-sidebar { flex: none; height: 200px; }
-          .preview-media { flex: 1; }
+          .insta-profile { max-width: 100%; }
+          .ip-main { padding: 16px 16px 0; }
+          .ip-intro { gap: 24px; }
+          .ip-avatar { width: 80px; height: 80px; font-size: 2rem; }
+          .ip-tabs { margin: 10px -16px 0; }
+          .ip-grid { margin: 3px -16px 0; }
+          .ip-preview-modal { flex-direction: column; height: 90vh; }
+          .ip-preview-sidebar { width: 100%; height: 180px; flex-shrink: 0; }
+          .ip-preview-media { flex: 1; }
         }
 
         .spin { animation: spin 1s linear infinite; }
@@ -326,4 +920,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

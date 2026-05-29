@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX } from 'lucide-react';
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const PostCard = ({ post, user, t, onLike, onDelete, isMuted, onToggleMute }) => {
+const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+    const [liked, setLiked] = useState(post.likes.includes(user.id));
+    const [likeCount, setLikeCount] = useState(post.likes.length);
     const navigate = useNavigate();
     const videoRef = useRef(null);
 
     useEffect(() => {
+        if (!videoRef.current) return;
         const obs = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (videoRef.current) {
@@ -22,68 +25,112 @@ const PostCard = ({ post, user, t, onLike, onDelete, isMuted, onToggleMute }) =>
                     }
                 }
             });
-        }, { threshold: 0.7 });
-        if (videoRef.current) obs.observe(videoRef.current);
+        }, { threshold: 0.5 });
+        obs.observe(videoRef.current);
         return () => obs.disconnect();
     }, []);
 
+    useEffect(() => {
+        if (videoRef.current) videoRef.current.muted = isMuted;
+    }, [isMuted]);
+
+    const handleLike = () => {
+        const newLiked = !liked;
+        setLiked(newLiked);
+        setLikeCount(c => newLiked ? c + 1 : c - 1);
+        onLike(post._id);
+    };
+
+    const isOwn = post.user._id === user.id;
+
     return (
-        <article className="post-card">
-            <div className="post-owner" onClick={() => navigate(`/profile/${post.user._id}`)}>
-                <div className="avatar">
-                    {post.user.avatar ? <img src={post.user.avatar} alt="v" /> : <span>{post.user.firstName[0]}</span>}
+        <article className="ig-post">
+            {/* Header */}
+            <div className="ig-post-header">
+                <div className="ig-avatar" onClick={() => navigate(`/profile/${post.user._id}`)}>
+                    {post.user.avatar
+                        ? <img src={post.user.avatar} alt="" />
+                        : <span>{post.user.firstName?.[0] || post.user.username?.[0]}</span>
+                    }
                 </div>
-                <div className="owner-info">
-                    <h3>{post.user.username}</h3>
-                    <p>{post.user.firstName} {post.user.lastName}</p>
+                <div className="ig-user-info" onClick={() => navigate(`/profile/${post.user._id}`)}>
+                    <span className="ig-username">{post.user.username}</span>
+                    <span className="ig-post-time">{new Date(post.createdAt).toLocaleDateString()}</span>
                 </div>
-                {post.user._id === user.id && (
-                    <button className="post-menu-del" onClick={(e) => { e.stopPropagation(); onDelete(post._id); }}>
-                        <MoreHorizontal size={20} />
-                    </button>
-                )}
-            </div>
-
-            <div className="post-media" onDoubleClick={() => onLike(post._id)}>
-                {post.fileType === 'video' ? (
-                    <div className="video-wrapper">
-                        <video ref={videoRef} src={post.fileUrl} muted={isMuted} loop playsInline />
-                        <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); onToggleMute(); }}>
-                            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                {isOwn && (
+                    <div style={{ position: 'relative' }}>
+                        <button className="ig-menu" onClick={() => setShowMenu(!showMenu)}>
+                            <MoreHorizontal size={20} />
                         </button>
+                        {showMenu && (
+                            <div className="post-dropdown">
+                                <button className="post-dropdown-item danger" onClick={() => { onDelete(post._id); setShowMenu(false); }}>
+                                    <Trash2 size={16} /> Delete post
+                                </button>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <img src={post.fileUrl} alt="post" />
                 )}
             </div>
 
-            <div className="post-actions-overlay">
-                <div className="action-btns">
-                    <button onClick={() => onLike(post._id)}>
-                        <Heart size={28} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
+            {/* Media */}
+            <div className="ig-post-media" onDoubleClick={handleLike}>
+                {post.fileType === 'video' ? (
+                    <>
+                        <video
+                            ref={videoRef}
+                            src={post.fileUrl}
+                            muted={isMuted}
+                            loop
+                            playsInline
+                            preload="auto"
+                        />
+                        <button className="ig-sound-btn" onClick={onToggleMute}>
+                            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                        </button>
+                    </>
+                ) : (
+                    <img src={post.fileUrl} alt="post" loading="lazy" />
+                )}
+            </div>
+
+            {/* Actions */}
+            <div className="ig-post-actions">
+                <div className="ig-actions-left">
+                    <button onClick={handleLike} className={liked ? 'liked' : ''}>
+                        <Heart
+                            size={24}
+                            fill={liked ? "#ed4956" : "none"}
+                            color={liked ? "#ed4956" : "currentColor"}
+                            style={liked ? { animation: 'heartBeat 0.4s ease' } : {}}
+                        />
                     </button>
+                    <button><MessageCircle size={24} /></button>
+                    <button><Send size={24} /></button>
                 </div>
-                <p className="likes-count"><b>{post.likes.length} likes</b></p>
-                <div className="caption">
-                    <b>{post.user.username}</b>
-                    {isExpanded || post.caption.length < 60 ? (
-                        <span>{post.caption}</span>
-                    ) : (
-                        <>
-                            <span>{post.caption.slice(0, 60)}...</span>
-                            <button className="more-btn" onClick={() => setIsExpanded(true)}>more</button>
+                <button><Bookmark size={24} /></button>
+            </div>
+
+            {/* Info */}
+            <div className="ig-post-info">
+                <span className="ig-likes">{likeCount} likes</span>
+                <div className="ig-caption">
+                    <b>{post.user.username}</b>{' '}
+                    {isExpanded || (post.caption || '').length < 80
+                        ? <span>{post.caption}</span>
+                        : <>
+                            <span>{post.caption?.slice(0, 80)}...</span>
+                            <button className="ig-more" onClick={() => setIsExpanded(true)}>more</button>
                         </>
-                    )}
+                    }
                 </div>
-                <p className="post-time">{new Date(post.createdAt).toLocaleDateString()}</p>
             </div>
         </article>
     );
 };
 
 const Home = () => {
-    const { user, lang } = useAuth();
-    const t = translations[lang];
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
     const [storyGroups, setStoryGroups] = useState([]);
@@ -105,12 +152,7 @@ const Home = () => {
     const fetchFeed = async () => {
         try {
             const res = await axios.get('/api/posts/feed');
-            // Advanced shuffle
-            const shuffled = res.data
-                .map(value => ({ value, sort: Math.random() }))
-                .sort((a, b) => a.sort - b.sort)
-                .map(({ value }) => value);
-            setPosts(shuffled);
+            setPosts(res.data);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
@@ -118,7 +160,10 @@ const Home = () => {
     const handleLike = async (postId) => {
         try {
             const res = await axios.post(`/api/posts/${postId}/like`);
-            setPosts(posts.map(p => p._id === postId ? { ...p, likes: res.data.hasLiked ? [...p.likes, user.id] : p.likes.filter(id => id !== user.id) } : p));
+            setPosts(posts.map(p => p._id === postId
+                ? { ...p, likes: res.data.hasLiked ? [...p.likes, user.id] : p.likes.filter(id => id !== user.id) }
+                : p
+            ));
         } catch (err) { console.error(err); }
     };
 
@@ -131,74 +176,291 @@ const Home = () => {
     };
 
     return (
-        <div className="home-page">
-            <header className="home-header">
-                <h1 className="logo">CHaT</h1>
-                <div className="header-actions">
+        <div className="ig-home">
+            {/* Mobile-only header */}
+            <header className="ig-home-header">
+                <h1 className="ig-logo">CHaT</h1>
+                <div className="ig-header-actions">
                     <button onClick={() => navigate('/chat')}><Send size={24} /></button>
                 </div>
             </header>
 
-            <div className="stories-bar">
-                <div className="story-item mine" onClick={() => navigate('/profile')}>
-                    <div className="story-avatar">
-                        {user.avatar ? <img src={user.avatar} alt="v" /> : <span>+</span>}
+            {/* Stories Bar */}
+            <div className="ig-stories-bar">
+                <div className="ig-story-item" onClick={() => navigate('/profile')}>
+                    <div className="ig-story-ring own">
+                        {user?.avatar
+                            ? <img src={user.avatar} alt="" />
+                            : <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>+</span>
+                        }
                     </div>
-                    <span>Your Story</span>
+                    <span>Your story</span>
                 </div>
                 {storyGroups.map(group => (
-                    <div key={group.user._id} className="story-item" onClick={() => navigate(`/stories/${group.user._id}`)}>
-                        <div className={`story-avatar ${group.stories.some(s => !s.hasViewed) ? 'unseen' : ''}`}>
-                            <img src={group.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${group.user.username}`} alt="s" />
+                    <div key={group.user._id} className="ig-story-item" onClick={() => navigate(`/stories/${group.user._id}`)}>
+                        <div className={`ig-story-ring ${group.stories.some(s => !s.hasViewed) ? 'unseen' : 'seen'}`}>
+                            <img
+                                src={group.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${group.user.username}`}
+                                alt=""
+                            />
                         </div>
                         <span>{group.user.username}</span>
                     </div>
                 ))}
             </div>
 
-            <main className="feed-container">
-                {posts.map(post => <PostCard key={post._id} post={post} user={user} t={t} onLike={handleLike} onDelete={handleDeletePost} isMuted={globalMuted} onToggleMute={() => setGlobalMuted(!globalMuted)} />)}
+            {/* Feed */}
+            <main className="ig-feed">
+                {loading ? (
+                    <div className="ig-loading">
+                        {[1,2,3].map(i => (
+                            <div key={i} className="ig-skeleton">
+                                <div className="sk-header">
+                                    <div className="sk-circle"></div>
+                                    <div className="sk-lines">
+                                        <div className="sk-line short"></div>
+                                        <div className="sk-line shorter"></div>
+                                    </div>
+                                </div>
+                                <div className="sk-media"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : posts.map(post => (
+                    <PostCard
+                        key={post._id}
+                        post={post}
+                        user={user}
+                        onLike={handleLike}
+                        onDelete={handleDeletePost}
+                        isMuted={globalMuted}
+                        onToggleMute={() => setGlobalMuted(!globalMuted)}
+                    />
+                ))}
             </main>
 
             <BottomNav />
 
             <style jsx="true">{`
-                .home-page { background: var(--bg-primary); min-height: 100vh; max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-                .home-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg-primary); z-index: 100; flex-shrink: 0; }
-                .logo { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); letter-spacing: -1px; }
-                .header-actions button { background: transparent; border: none !important; color: var(--text-primary); }
+                .ig-home { background: var(--bg-primary); min-height: 100vh; }
 
-                .stories-bar { display: flex; gap: 15px; padding: 15px; overflow-x: auto; border-bottom: 1px solid var(--border); scrollbar-width: none; flex-shrink: 0; }
-                .stories-bar::-webkit-scrollbar { display: none; }
-                .story-item { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 75px; cursor: pointer; }
-                .story-avatar { width: 68px; height: 68px; border-radius: 50%; padding: 3px; border: 2px solid transparent; background: var(--bg-secondary); }
-                .story-avatar.unseen { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
-                .story-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-primary); }
-                .story-item span { font-size: 0.78rem; font-weight: 500; color: var(--text-primary); max-width: 65px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .ig-home-header {
+                    display: none;
+                }
+                @media (max-width: 768px) {
+                    .ig-home-header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 12px 16px;
+                        border-bottom: 1px solid var(--border);
+                        background: var(--bg-primary);
+                        position: sticky;
+                        top: 0;
+                        z-index: 100;
+                    }
+                }
+                .ig-logo { font-size: 1.6rem; font-weight: 900; letter-spacing: -1px; }
+                .ig-header-actions button { color: var(--text-primary); }
 
-                .feed-container { flex: 1; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; background: #000; }
-                .feed-container::-webkit-scrollbar { display: none; }
-                .post-card { scroll-snap-align: start; scroll-snap-stop: always; height: calc(100vh - 140px); background: #000; display: flex; flex-direction: column; position: relative; border-bottom: 0.5px solid #222; margin-bottom: 15px; border-radius: 12px; overflow: hidden; }
-                
-                .post-owner { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px; padding: 15px; cursor: pointer; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); z-index: 20; color: white; }
-                .post-owner .avatar { width: 40px; height: 40px; border-radius: 50%; background: #333; overflow: hidden; border: 1.5px solid white; }
-                .post-owner .avatar img { width: 100%; height: 100%; object-fit: cover; }
-                .owner-info h3 { font-size: 0.95rem; font-weight: 800; margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-                .owner-info p { font-size: 0.8rem; opacity: 0.8; margin: 0; }
-                .post-menu-del { background: transparent; border: none !important; color: white; margin-left: auto; }
+                /* Stories */
+                .ig-stories-bar {
+                    display: flex;
+                    gap: 14px;
+                    padding: 14px 16px;
+                    overflow-x: auto;
+                    border-bottom: 1px solid var(--border);
+                    scrollbar-width: none;
+                    max-width: 630px;
+                    margin: 0 auto;
+                }
+                .ig-stories-bar::-webkit-scrollbar { display: none; }
 
-                .post-media { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; background: #000; position: relative; overflow: hidden; }
-                .video-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-                .post-media img, .post-media video { width: 100%; height: 100%; object-fit: contain; }
-                .video-sound-overlay { position: absolute; bottom: 85px; right: 15px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 30; }
+                .ig-story-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 5px;
+                    min-width: 64px;
+                    cursor: pointer;
+                }
+                .ig-story-ring {
+                    width: 64px;
+                    height: 64px;
+                    border-radius: 50%;
+                    padding: 3px;
+                    background: var(--bg-secondary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: transform 0.15s;
+                }
+                .ig-story-item:hover .ig-story-ring { transform: scale(1.05); }
+                .ig-story-ring.unseen {
+                    background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+                }
+                .ig-story-ring.seen { background: var(--border); }
+                .ig-story-ring.own { background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); }
 
-                .post-actions-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white; z-index: 20; }
-                .action-btns { display: flex; gap: 20px; margin-bottom: 10px; }
-                .action-btns button { color: white; }
-                .likes-count { font-size: 0.95rem; font-weight: 700; margin-bottom: 5px; }
-                .caption { font-size: 0.95rem; line-height: 1.4; display: block; opacity: 0.95; }
-                .caption b { margin-right: 8px; }
-                .post-time { font-size: 0.75rem; opacity: 0.6; margin-top: 8px; text-transform: uppercase; }
+                .ig-story-ring img, .ig-story-ring span {
+                    width: 58px;
+                    height: 58px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 3px solid var(--bg-primary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--bg-secondary);
+                }
+                .ig-story-item > span {
+                    font-size: 0.73rem;
+                    color: var(--text-primary);
+                    max-width: 64px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    text-align: center;
+                }
+
+                /* Feed */
+                .ig-feed {
+                    max-width: 470px;
+                    margin: 0 auto;
+                    padding-bottom: 30px;
+                }
+
+                /* Post Card */
+                .ig-post {
+                    border-bottom: 1px solid var(--border);
+                    margin-bottom: 4px;
+                    background: var(--bg-primary);
+                }
+
+                .ig-post-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 10px 12px;
+                }
+                .ig-avatar {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    background: var(--bg-secondary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    border: 1px solid var(--border);
+                    cursor: pointer;
+                    flex-shrink: 0;
+                }
+                .ig-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .ig-user-info {
+                    flex: 1;
+                    cursor: pointer;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .ig-username { font-weight: 600; font-size: 0.9rem; }
+                .ig-post-time { font-size: 0.75rem; color: var(--text-secondary); }
+                .ig-menu { color: var(--text-primary); }
+
+                .post-dropdown {
+                    position: absolute;
+                    right: 0;
+                    top: 32px;
+                    background: var(--bg-primary);
+                    border: 1px solid var(--border);
+                    border-radius: 12px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                    z-index: 200;
+                    min-width: 160px;
+                    overflow: hidden;
+                }
+                .post-dropdown-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 12px 16px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    width: 100%;
+                    text-align: left;
+                    transition: background 0.15s;
+                }
+                .post-dropdown-item:hover { background: var(--bg-secondary); }
+                .post-dropdown-item.danger { color: #ed4956; }
+
+                .ig-post-media {
+                    position: relative;
+                    width: 100%;
+                    background: #000;
+                    max-height: 600px;
+                    overflow: hidden;
+                }
+                .ig-post-media img {
+                    width: 100%;
+                    display: block;
+                    max-height: 600px;
+                    object-fit: cover;
+                }
+                .ig-post-media video {
+                    width: 100%;
+                    display: block;
+                    max-height: 600px;
+                    object-fit: cover;
+                }
+                .ig-sound-btn {
+                    position: absolute;
+                    bottom: 14px;
+                    right: 14px;
+                    background: rgba(38,38,38,0.85);
+                    color: white;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 5;
+                }
+
+                .ig-post-actions {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 12px 4px;
+                }
+                .ig-actions-left { display: flex; gap: 14px; }
+                .ig-post-actions button { color: var(--text-primary); padding: 4px; }
+                .ig-post-actions button.liked { color: #ed4956; }
+
+                .ig-post-info { padding: 0 12px 14px; }
+                .ig-likes { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 4px; }
+                .ig-caption { font-size: 0.9rem; line-height: 1.4; }
+                .ig-caption b { font-weight: 600; margin-right: 6px; }
+                .ig-more { color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; }
+
+                /* Skeleton loader */
+                .ig-loading { padding: 0; }
+                .ig-skeleton { margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+                .sk-header { display: flex; align-items: center; gap: 10px; padding: 12px; }
+                .sk-circle { width: 34px; height: 34px; border-radius: 50%; background: var(--bg-secondary); animation: pulse 1.5s infinite; flex-shrink: 0; }
+                .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+                .sk-line { height: 10px; background: var(--bg-secondary); border-radius: 6px; animation: pulse 1.5s infinite; }
+                .sk-line.short { width: 60%; }
+                .sk-line.shorter { width: 40%; }
+                .sk-media { height: 300px; background: var(--bg-secondary); animation: pulse 1.5s infinite; }
+
+                @media (max-width: 768px) {
+                    .ig-feed { max-width: 100%; }
+                    .ig-stories-bar { max-width: 100%; }
+                }
             `}</style>
         </div>
     );
