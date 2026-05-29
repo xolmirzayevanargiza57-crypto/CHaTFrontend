@@ -28,6 +28,7 @@ const Profile = () => {
   });
   
   const fileInputRef = useRef(null);
+  const storyInputRef = useRef(null);
   const isOwnProfile = !userId || userId === user.id;
 
   useEffect(() => {
@@ -134,7 +135,7 @@ const Profile = () => {
   if (loading) return <div className="loading-screen"><Loader className="spin" /></div>;
   if (!profileData) return <div className="error-screen">User Not Found</div>;
 
-  const storyInputRef = useRef(null);
+
 
   return (
     <div className="insta-profile">

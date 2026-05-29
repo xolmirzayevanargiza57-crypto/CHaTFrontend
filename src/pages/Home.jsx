@@ -42,6 +42,14 @@ const Home = () => {
         } catch (err) { console.error(err); }
     };
 
+    const handleDeletePost = async (postId) => {
+        if (!window.confirm("Postni o'chirishni istaysizmi?")) return;
+        try {
+            await axios.delete(`/api/posts/${postId}`);
+            setPosts(posts.filter(p => p._id !== postId));
+        } catch (err) { alert("Xatolik!"); }
+    };
+
     return (
         <div className="home-page">
             <header className="home-header">
@@ -79,7 +87,11 @@ const Home = () => {
                                 <h3>{post.user.username}</h3>
                                 <p>{post.user.firstName} {post.user.lastName}</p>
                             </div>
-                            <button className="post-menu"><MoreHorizontal size={20} /></button>
+                            {post.user._id === user.id && (
+                                <button className="post-menu-del" onClick={(e) => { e.stopPropagation(); handleDeletePost(post._id); }}>
+                                    <MoreHorizontal size={20} />
+                                </button>
+                            )}
                         </div>
 
                         <div className="post-media" onDoubleClick={() => handleLike(post._id)}>
@@ -150,6 +162,9 @@ const Home = () => {
                 .owner-info h3 { font-size: 0.95rem; font-weight: 800; margin: 0; }
                 .owner-info p { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
                 .post-menu { background: transparent; border: none !important; color: var(--text-secondary); }
+
+                .post-menu-del { background: transparent; border: none !important; color: var(--text-secondary); cursor: pointer; padding: 5px; border-radius: 50%; }
+                .post-menu-del:hover { background: rgba(0,0,0,0.05); color: #ff3b30; }
 
                 .post-media { width: 100%; background: #000; display: flex; align-items: center; justify-content: center; min-height: 300px; }
                 .post-media img, .post-media video { width: 100%; max-height: 600px; object-fit: contain; }
