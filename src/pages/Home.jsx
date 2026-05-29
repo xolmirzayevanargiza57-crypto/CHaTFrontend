@@ -1,10 +1,86 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const PostCard = ({ post, user, t, onLike, onDelete }) => {
+    const [postMuted, setPostMuted] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const navigate = useNavigate();
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (videoRef.current) {
+                    if (entry.isIntersecting) {
+                        videoRef.current.play().catch(() => {});
+                    } else {
+                        videoRef.current.pause();
+                    }
+                }
+            });
+        }, { threshold: 0.7 });
+        if (videoRef.current) obs.observe(videoRef.current);
+        return () => obs.disconnect();
+    }, []);
+
+    return (
+        <article className="post-card">
+            <div className="post-owner" onClick={() => navigate(`/profile/${post.user._id}`)}>
+                <div className="avatar">
+                    {post.user.avatar ? <img src={post.user.avatar} alt="v" /> : <span>{post.user.firstName[0]}</span>}
+                </div>
+                <div className="owner-info">
+                    <h3>{post.user.username}</h3>
+                    <p>{post.user.firstName} {post.user.lastName}</p>
+                </div>
+                {post.user._id === user.id && (
+                    <button className="post-menu-del" onClick={(e) => { e.stopPropagation(); onDelete(post._id); }}>
+                        <MoreHorizontal size={20} />
+                    </button>
+                )}
+            </div>
+
+            <div className="post-media" onDoubleClick={() => onLike(post._id)}>
+                {post.fileType === 'video' ? (
+                    <div className="video-wrapper">
+                        <video ref={videoRef} src={post.fileUrl} muted={postMuted} loop playsInline />
+                        <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); setPostMuted(!postMuted); }}>
+                            {postMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                        </button>
+                    </div>
+                ) : (
+                    <img src={post.fileUrl} alt="post" />
+                )}
+            </div>
+
+            <div className="post-actions-overlay">
+                <div className="action-btns">
+                    <button onClick={() => onLike(post._id)}>
+                        <Heart size={28} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
+                    </button>
+                </div>
+                <p className="likes-count"><b>{post.likes.length} likes</b></p>
+                <div className="caption">
+                    <b>{post.user.username}</b>
+                    {isExpanded || post.caption.length < 60 ? (
+                        <span>{post.caption}</span>
+                    ) : (
+                        <>
+                            <span>{post.caption.slice(0, 60)}...</span>
+                            <button className="more-btn" onClick={() => setIsExpanded(true)}>more</button>
+                        </>
+                    )}
+                </div>
+                <p className="post-time">{new Date(post.createdAt).toLocaleDateString()}</p>
+            </div>
+        </article>
+    );
+};
 
 const Home = () => {
     const { user, lang } = useAuth();
@@ -13,66 +89,6 @@ const Home = () => {
     const [posts, setPosts] = useState([]);
     const [storyGroups, setStoryGroups] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [expandedPosts, setExpandedPosts] = useState({});
-    
-    const PostCard = ({ post, user, t, onLike, onDelete }) => {
-        const [postMuted, setPostMuted] = useState(true);
-        const [isExpanded, setIsExpanded] = useState(false);
-        const navigate = useNavigate();
-
-        return (
-            <article className="post-card">
-                <div className="post-owner" onClick={() => navigate(`/profile/${post.user._id}`)}>
-                    <div className="avatar">
-                        {post.user.avatar ? <img src={post.user.avatar} alt="v" /> : <span>{post.user.firstName[0]}</span>}
-                    </div>
-                    <div className="owner-info">
-                        <h3>{post.user.username}</h3>
-                        <p>{post.user.firstName} {post.user.lastName}</p>
-                    </div>
-                    {post.user._id === user.id && (
-                        <button className="post-menu-del" onClick={(e) => { e.stopPropagation(); onDelete(post._id); }}>
-                            <MoreHorizontal size={20} />
-                        </button>
-                    )}
-                </div>
-
-                <div className="post-media" onDoubleClick={() => onLike(post._id)}>
-                    {post.fileType === 'video' ? (
-                        <div className="video-wrapper">
-                            <video src={post.fileUrl} autoPlay muted={postMuted} loop playsInline />
-                            <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); setPostMuted(!postMuted); }}>
-                                {postMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                            </button>
-                        </div>
-                    ) : (
-                        <img src={post.fileUrl} alt="post" />
-                    )}
-                </div>
-
-                <div className="post-actions-overlay">
-                    <div className="action-btns">
-                        <button onClick={() => onLike(post._id)}>
-                            <Heart size={28} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
-                        </button>
-                    </div>
-                    <p className="likes-count"><b>{post.likes.length} likes</b></p>
-                    <div className="caption">
-                        <b>{post.user.username}</b>
-                        {isExpanded || post.caption.length < 60 ? (
-                            <span>{post.caption}</span>
-                        ) : (
-                            <>
-                                <span>{post.caption.slice(0, 60)}...</span>
-                                <button className="more-btn" onClick={() => setIsExpanded(true)}>more</button>
-                            </>
-                        )}
-                    </div>
-                    <p className="post-time">{new Date(post.createdAt).toLocaleDateString()}</p>
-                </div>
-            </article>
-        );
-    };
 
     useEffect(() => {
         fetchFeed();
@@ -89,7 +105,12 @@ const Home = () => {
     const fetchFeed = async () => {
         try {
             const res = await axios.get('/api/posts/feed');
-            setPosts(res.data);
+            // Advanced shuffle
+            const shuffled = res.data
+                .map(value => ({ value, sort: Math.random() }))
+                .sort((a, b) => a.sort - b.sort)
+                .map(({ value }) => value);
+            setPosts(shuffled);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };

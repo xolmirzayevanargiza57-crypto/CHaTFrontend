@@ -215,15 +215,15 @@ const Profile = () => {
       {selectedPost && (
         <div className="post-preview-overlay" onClick={() => setSelectedPost(null)}>
           <div className="post-preview-modal" onClick={e => e.stopPropagation()}>
-            <button className="close-preview" onClick={() => setSelectedPost(null)}><X size={24} /></button>
+            <button className="close-preview" onClick={() => setSelectedPost(null)}><X size={28} /></button>
             <div className="preview-media">
                {selectedPost.fileType === 'video' ? <video src={selectedPost.fileUrl} controls autoPlay loop /> : <img src={selectedPost.fileUrl} alt="p" />}
             </div>
             <div className="preview-sidebar">
                <div className="preview-owner">
-                  <img src={profileData.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profileData.username}`} alt="v" />
-                  <b>{profileData.username}</b>
-                  {isOwnProfile && <button className="del-btn" onClick={() => { handleDeletePost(selectedPost._id); setSelectedPost(null); }}><Trash2 size={20} /></button>}
+                  <img src={profileData?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profileData?.username}`} alt="v" />
+                  <b>{profileData?.username}</b>
+                  {isOwnProfile && <button className="del-btn" onClick={() => { handleDeletePost(selectedPost._id); setSelectedPost(null); }}><Trash2 size={22} /></button>}
                </div>
                <div className="preview-content">
                   <p>{selectedPost.caption}</p>
