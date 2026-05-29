@@ -64,10 +64,6 @@ const ReelItem = ({ post, user, onLike }) => {
                         <Heart size={32} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
                         <span>{post.likes.length}</span>
                     </div>
-                    <div className="action-item" onClick={() => navigate(`/post/${post._id}`)}>
-                        <MessageCircle size={32} color="white" />
-                        <span>{post.comments.length}</span>
-                    </div>
                     <div className="action-item" onClick={() => setIsMuted(!isMuted)}>
                         {isMuted ? <VolumeX size={26} color="white" /> : <Volume2 size={26} color="white" />}
                     </div>

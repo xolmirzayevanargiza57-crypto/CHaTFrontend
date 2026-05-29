@@ -54,6 +54,9 @@ const Home = () => {
         <div className="home-page">
             <header className="home-header">
                 <h1 className="logo">CHaT</h1>
+                <div className="header-actions">
+                    <button onClick={() => navigate('/chat')}><Send size={24} /></button>
+                </div>
             </header>
 
             <div className="stories-bar">
@@ -93,7 +96,7 @@ const Home = () => {
 
                         <div className="post-media" onDoubleClick={() => handleLike(post._id)}>
                             {post.fileType === 'video' ? (
-                                <video src={post.fileUrl} controls playsInline />
+                                <video src={post.fileUrl} autoPlay muted loop playsInline />
                             ) : (
                                 <img src={post.fileUrl} alt="post" />
                             )}
@@ -104,9 +107,7 @@ const Home = () => {
                                 <button onClick={() => handleLike(post._id)}>
                                     <Heart size={26} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "currentColor"} />
                                 </button>
-                                <button onClick={() => navigate(`/post/${post._id}`)}><MessageCircle size={26} /></button>
                             </div>
-                            <button><Bookmark size={26} /></button>
                         </div>
 
                         <div className="post-content">
@@ -122,9 +123,6 @@ const Home = () => {
                                     </>
                                 )}
                             </div>
-                            <button className="view-comments" onClick={() => navigate(`/post/${post._id}`)}>
-                                View all {post.comments.length} comments
-                            </button>
                             <p className="post-time">{new Date(post.createdAt).toLocaleDateString()}</p>
                         </div>
                     </article>

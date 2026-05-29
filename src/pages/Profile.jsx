@@ -22,9 +22,10 @@ const Profile = () => {
   const [savedPosts, setSavedPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('posts');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', avatar: '', bio: ''
+    firstName: '', lastName: '', avatar: '', bio: '', username: ''
   });
   
   const fileInputRef = useRef(null);
@@ -63,7 +64,8 @@ const Profile = () => {
         firstName: res.data.firstName,
         lastName: res.data.lastName,
         avatar: res.data.avatar || '',
-        bio: res.data.bio || ''
+        bio: res.data.bio || '',
+        username: res.data.username || ''
       });
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -91,6 +93,12 @@ const Profile = () => {
   };
 
   const handleUpdate = async () => {
+    // Only alphanumeric and _ . allowed
+    const usernameRegex = /^[a-zA-Z0-0._]+$/;
+    if (formData.username && !usernameRegex.test(formData.username)) {
+      alert("Username faqat harf, raqam va . _ belgilaridan iborat bo'lishi kerak!");
+      return;
+    }
     try {
       const response = await axios.put('/api/users/me', formData);
       setUser({ ...user, ...response.data });
@@ -106,13 +114,14 @@ const Profile = () => {
     const form = new FormData();
     form.append('file', file);
     try {
-      const res = await axios.post('/api/upload', form);
+      const res = await axios.post('/api/upload', form, {
+        onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / p.total))
+      });
       setFormData({ ...formData, avatar: res.data.fileUrl });
-      // Update immediately
       await axios.put('/api/users/me', { ...formData, avatar: res.data.fileUrl });
       setUser({ ...user, avatar: res.data.fileUrl });
     } catch (err) { alert("Xatolik!"); }
-    finally { setUploading(false); }
+    finally { setUploading(false); setUploadProgress(0); }
   };
 
   const handleStoryUpload = async (e) => {
@@ -122,14 +131,16 @@ const Profile = () => {
     const form = new FormData();
     form.append('file', file);
     try {
-      const uploadRes = await axios.post('/api/upload', form);
+      const uploadRes = await axios.post('/api/upload', form, {
+        onUploadProgress: (p) => setUploadProgress(Math.round((p.loaded * 100) / p.total))
+      });
       await axios.post('/api/stories', {
         fileUrl: uploadRes.data.fileUrl,
         fileType: file.type.startsWith('video') ? 'video' : 'image'
       });
       alert("Story yuklandi!");
     } catch (err) { alert("Story yuklashda xatolik!"); }
-    finally { setUploading(false); }
+    finally { setUploading(false); setUploadProgress(0); }
   };
 
   if (loading) return <div className="loading-screen"><Loader className="spin" /></div>;
@@ -163,6 +174,12 @@ const Profile = () => {
              <div className="stat-item"><b>{profileData.followers?.length || 0}</b> <span>{t.followers}</span></div>
              <div className="stat-item"><b>{profileData.following?.length || 0}</b> <span>{t.following}</span></div>
           </div>
+          {uploading && (
+            <div className="upload-progress-bar">
+               <div className="fill" style={{width: `${uploadProgress}%`}}></div>
+               <span>{uploadProgress}% yuklanmoqda...</span>
+            </div>
+          )}
         </section>
 
         <section className="bio-section">
@@ -188,7 +205,6 @@ const Profile = () => {
         <div className="profile-tabs">
           <button className={activeTab === 'posts' ? 'active' : ''} onClick={() => setActiveTab('posts')}><Grid size={20} /></button>
           <button className={activeTab === 'reels' ? 'active' : ''} onClick={() => setActiveTab('reels')}><Video size={20} /></button>
-          {isOwnProfile && <button className={activeTab === 'saved' ? 'active' : ''} onClick={() => setActiveTab('saved')}><Save size={20} /></button>}
         </div>
 
         <div className="post-grid">
@@ -210,6 +226,7 @@ const Profile = () => {
         <div className="edit-modal-overlay">
           <div className="edit-modal">
             <h3>{t.editProfile}</h3>
+            <input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toLowerCase().replace(/\s/g, '_')})} placeholder="Username" />
             <input type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder={t.firstName} />
             <input type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder={t.lastName} />
             <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} placeholder="Bio..." rows="4"></textarea>
@@ -265,7 +282,10 @@ const Profile = () => {
         .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 800; border: none !important; }
         .modal-btns .save { background: var(--accent); color: white; }
 
-        .loading-screen, .error-screen { height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); color: var(--accent); }
+        .upload-progress-bar { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-primary); padding: 10px 20px; border-radius: 20px; border: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; gap: 10px; width: 80%; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .upload-progress-bar .fill { height: 4px; background: var(--accent); border-radius: 2px; flex: 1; transition: width 0.3s; }
+        .upload-progress-bar span { font-size: 0.8rem; font-weight: 800; color: var(--accent); }
+
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
