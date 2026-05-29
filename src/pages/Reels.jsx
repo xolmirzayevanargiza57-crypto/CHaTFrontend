@@ -6,8 +6,7 @@ import BottomNav from '../components/BottomNav';
 import { Heart, MessageCircle, Send, Music, Loader, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const ReelItem = ({ post, user, onLike }) => {
-    const [isMuted, setIsMuted] = useState(false);
+const ReelItem = ({ post, user, onLike, isMuted, onToggleMute }) => {
     const [isFollowing, setIsFollowing] = useState(false);
     const videoRef = useRef(null);
 
@@ -24,9 +23,7 @@ const ReelItem = ({ post, user, onLike }) => {
                     if (entry.isIntersecting) {
                         videoRef.current.currentTime = 0;
                         videoRef.current.play().catch(e => {
-                            console.log("Autoplay blocked, muting...");
-                            setIsMuted(true);
-                            videoRef.current.play();
+                            console.log("Autoplay blocked");
                         });
                     } else {
                         videoRef.current.pause();
@@ -64,7 +61,7 @@ const ReelItem = ({ post, user, onLike }) => {
                         <Heart size={32} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
                         <span>{post.likes.length}</span>
                     </div>
-                    <div className="action-item" onClick={() => setIsMuted(!isMuted)}>
+                    <div className="action-item" onClick={onToggleMute}>
                         {isMuted ? <VolumeX size={26} color="white" /> : <Volume2 size={26} color="white" />}
                     </div>
                 </div>
@@ -95,6 +92,7 @@ const Reels = () => {
     const t = translations[lang];
     const [reels, setReels] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [globalMuted, setGlobalMuted] = useState(true);
 
     useEffect(() => {
         fetchReels();
@@ -121,7 +119,7 @@ const Reels = () => {
         <div className="reels-page">
             <div className="reels-container">
                 {reels.map(reel => (
-                    <ReelItem key={reel._id} post={reel} user={user} onLike={handleLike} />
+                    <ReelItem key={reel._id} post={reel} user={user} onLike={handleLike} isMuted={globalMuted} onToggleMute={() => setGlobalMuted(!globalMuted)} />
                 ))}
                 {reels.length === 0 && <div className="no-reels">No Reels Available</div>}
             </div>
@@ -129,12 +127,12 @@ const Reels = () => {
             <BottomNav />
 
             <style jsx="true">{`
-                .reels-page { background: #000; height: 100dvh; width: 100vw; position: fixed; inset: 0; z-index: 2000; }
-                .reels-container { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-snap-stop: always; scrollbar-width: none; }
+                .reels-page { background: #000; height: 100dvh; width: 100%; max-width: 600px; margin: 0 auto; position: fixed; inset: 0; z-index: 2000; }
+                .reels-container { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-snap-stop: always; scrollbar-width: none; background: #000; }
                 .reels-container::-webkit-scrollbar { display: none; }
                 
                 .reel-video-container { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-                video { width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+                video { width: 100%; height: 100%; object-fit: contain; }
                 
                 .reel-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 40%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 20px 100px; pointer-events: none; }
                 .reel-overlay * { pointer-events: auto; }

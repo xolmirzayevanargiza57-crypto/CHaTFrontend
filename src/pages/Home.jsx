@@ -6,8 +6,7 @@ import BottomNav from '../components/BottomNav';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const PostCard = ({ post, user, t, onLike, onDelete }) => {
-    const [postMuted, setPostMuted] = useState(true);
+const PostCard = ({ post, user, t, onLike, onDelete, isMuted, onToggleMute }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const navigate = useNavigate();
     const videoRef = useRef(null);
@@ -48,9 +47,9 @@ const PostCard = ({ post, user, t, onLike, onDelete }) => {
             <div className="post-media" onDoubleClick={() => onLike(post._id)}>
                 {post.fileType === 'video' ? (
                     <div className="video-wrapper">
-                        <video ref={videoRef} src={post.fileUrl} muted={postMuted} loop playsInline />
-                        <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); setPostMuted(!postMuted); }}>
-                            {postMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                        <video ref={videoRef} src={post.fileUrl} muted={isMuted} loop playsInline />
+                        <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); onToggleMute(); }}>
+                            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                         </button>
                     </div>
                 ) : (
@@ -89,6 +88,7 @@ const Home = () => {
     const [posts, setPosts] = useState([]);
     const [storyGroups, setStoryGroups] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [globalMuted, setGlobalMuted] = useState(true);
 
     useEffect(() => {
         fetchFeed();
@@ -157,7 +157,7 @@ const Home = () => {
             </div>
 
             <main className="feed-container">
-                {posts.map(post => <PostCard key={post._id} post={post} user={user} t={t} onLike={handleLike} onDelete={handleDeletePost} />)}
+                {posts.map(post => <PostCard key={post._id} post={post} user={user} t={t} onLike={handleLike} onDelete={handleDeletePost} isMuted={globalMuted} onToggleMute={() => setGlobalMuted(!globalMuted)} />)}
             </main>
 
             <BottomNav />
