@@ -19,7 +19,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [savedPosts, setSavedPosts] = useState([]);
   const [activeTab, setActiveTab] = useState('posts');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -35,15 +34,9 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
     fetchUserPosts();
-    if (isOwnProfile) fetchSavedPosts();
   }, [userId]);
 
-  const fetchSavedPosts = async () => {
-    try {
-      const res = await axios.get('/api/users/saved-posts');
-      setSavedPosts(res.data);
-    } catch (err) { console.error(err); }
-  };
+
 
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Postni o'chirishni istaysizmi?")) return;
@@ -208,17 +201,16 @@ const Profile = () => {
         </div>
 
         <div className="post-grid">
-          {(activeTab === 'saved' ? savedPosts : posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel)).map(post => (
+          {posts.filter(p => activeTab === 'reels' ? p.isReel : !p.isReel).map(post => (
             <div key={post._id} className="grid-item" onClick={() => navigate(`/post/${post._id}`)}>
-              {post.fileType === 'video' ? <video src={post.fileUrl} /> : <img src={post.fileUrl} alt="p" />}
+              {post.fileType === 'video' ? <video src={post.fileUrl} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} /> : <img src={post.fileUrl} alt="p" />}
               {post.isReel && <div className="reel-badge"><Video size={14} /></div>}
-              {isOwnProfile && activeTab === 'posts' && (
-                <button className="delete-post-btn" onClick={(e) => { e.stopPropagation(); handleDeletePost(post._id); }}><X size={14} /></button>
+              {isOwnProfile && (
+                <button className="delete-post-btn" onClick={(e) => { e.stopPropagation(); handleDeletePost(post._id); }}><Trash2 size={14} /></button>
               )}
             </div>
           ))}
-          {activeTab === 'posts' && posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
-          {activeTab === 'saved' && savedPosts.length === 0 && <div className="no-posts">Saqlanganlar yo'q</div>}
+          {posts.length === 0 && <div className="no-posts">{t.noPostsYet}</div>}
         </div>
       </main>
 

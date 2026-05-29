@@ -90,6 +90,25 @@ button {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (min-width: 1024px) {
+  body {
+    background: #111;
+  }
+  #root > div:not(.chat-page):not(.reels-page) {
+    max-width: 480px;
+    margin: 0 auto;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    box-shadow: 0 0 100px rgba(0,0,0,0.5);
+    min-height: 100vh;
+  }
+  .bottom-nav {
+    max-width: 480px;
+    left: 50% !important;
+    transform: translateX(-50%);
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

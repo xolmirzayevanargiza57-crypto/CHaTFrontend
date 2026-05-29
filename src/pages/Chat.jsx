@@ -163,7 +163,7 @@ const Chat = () => {
 
   const handleRemoveFriend = async (friendId) => {
     try {
-      await axios.delete(`/api/users/remove-friend/${friendId}`);
+      await axios.delete(`/api/users/friends/${friendId}`);
       setFriends(prev => prev.filter(f => f._id !== friendId));
       if (selectedFriend?._id === friendId) setSelectedFriend(null);
     } catch (err) { console.error(err); }

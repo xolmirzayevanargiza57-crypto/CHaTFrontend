@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
@@ -14,6 +14,7 @@ const Home = () => {
     const [storyGroups, setStoryGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedPosts, setExpandedPosts] = useState({});
+    const [isMuted, setIsMuted] = useState(true);
 
     useEffect(() => {
         fetchFeed();
@@ -55,6 +56,9 @@ const Home = () => {
             <header className="home-header">
                 <h1 className="logo">CHaT</h1>
                 <div className="header-actions">
+                    <button onClick={() => setIsMuted(!isMuted)} style={{marginRight: 15}}>
+                        {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+                    </button>
                     <button onClick={() => navigate('/chat')}><Send size={24} /></button>
                 </div>
             </header>
@@ -96,7 +100,7 @@ const Home = () => {
 
                         <div className="post-media" onDoubleClick={() => handleLike(post._id)}>
                             {post.fileType === 'video' ? (
-                                <video src={post.fileUrl} autoPlay muted loop playsInline />
+                                <video src={post.fileUrl} autoPlay muted={isMuted} loop playsInline controls />
                             ) : (
                                 <img src={post.fileUrl} alt="post" />
                             )}
@@ -132,8 +136,8 @@ const Home = () => {
             <BottomNav />
 
             <style jsx="true">{`
-                .home-page { background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; }
-                .home-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-primary); z-index: 100; }
+                .home-page { background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+                .home-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-primary); z-index: 100; max-width: 600px; margin: 0 auto; left: 0; right: 0; }
                 .logo { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); }
                 .header-actions button { background: transparent; border: none !important; color: var(--text-primary); }
 
