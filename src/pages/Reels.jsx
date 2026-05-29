@@ -64,12 +64,9 @@ const ReelItem = ({ post, user, onLike }) => {
                         <Heart size={32} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "white"} />
                         <span>{post.likes.length}</span>
                     </div>
-                    <div className="action-item">
+                    <div className="action-item" onClick={() => navigate(`/post/${post._id}`)}>
                         <MessageCircle size={32} color="white" />
                         <span>{post.comments.length}</span>
-                    </div>
-                    <div className="action-item">
-                        <Send size={30} color="white" />
                     </div>
                     <div className="action-item" onClick={() => setIsMuted(!isMuted)}>
                         {isMuted ? <VolumeX size={26} color="white" /> : <Volume2 size={26} color="white" />}
@@ -140,8 +137,8 @@ const Reels = () => {
                 .reels-container { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-snap-stop: always; scrollbar-width: none; }
                 .reels-container::-webkit-scrollbar { display: none; }
                 
-                .reel-video-container { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
-                video { width: 100%; height: 100%; object-fit: contain; }
+                .reel-video-container { height: 100dvh; width: 100%; scroll-snap-align: start; position: relative; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+                video { width: 100%; height: auto; max-height: 100%; object-fit: contain; }
                 
                 .reel-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 40%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 20px 100px; pointer-events: none; }
                 .reel-overlay * { pointer-events: auto; }

@@ -54,9 +54,6 @@ const Home = () => {
         <div className="home-page">
             <header className="home-header">
                 <h1 className="logo">CHaT</h1>
-                <div className="header-actions">
-                    <button onClick={() => navigate('/chat')}><Send size={24} /></button>
-                </div>
             </header>
 
             <div className="stories-bar">
@@ -108,7 +105,6 @@ const Home = () => {
                                     <Heart size={26} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "currentColor"} />
                                 </button>
                                 <button onClick={() => navigate(`/post/${post._id}`)}><MessageCircle size={26} /></button>
-                                <button><Send size={26} /></button>
                             </div>
                             <button><Bookmark size={26} /></button>
                         </div>
