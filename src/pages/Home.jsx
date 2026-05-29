@@ -100,7 +100,12 @@ const Home = () => {
 
                         <div className="post-media" onDoubleClick={() => handleLike(post._id)}>
                             {post.fileType === 'video' ? (
-                                <video src={post.fileUrl} autoPlay muted={isMuted} loop playsInline controls />
+                                <div className="video-wrapper">
+                                    <video src={post.fileUrl} autoPlay muted={isMuted} loop playsInline />
+                                    <button className="video-sound-overlay" onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}>
+                                        {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                                    </button>
+                                </div>
                             ) : (
                                 <img src={post.fileUrl} alt="post" />
                             )}
@@ -164,8 +169,10 @@ const Home = () => {
                 .post-menu-del { background: transparent; border: none !important; color: var(--text-secondary); cursor: pointer; padding: 5px; border-radius: 50%; }
                 .post-menu-del:hover { background: rgba(0,0,0,0.05); color: #ff3b30; }
 
-                .post-media { width: 100%; background: #000; display: flex; align-items: center; justify-content: center; min-height: 300px; }
-                .post-media img, .post-media video { width: 100%; max-height: 600px; object-fit: contain; }
+                .post-media { width: 100%; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+                .video-wrapper { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
+                .post-media img, .post-media video { width: 100%; height: auto; max-height: 80vh; object-fit: contain; background: #000; }
+                .video-sound-overlay { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
 
                 .post-actions { display: flex; justify-content: space-between; padding: 12px 15px 8px; }
                 .post-actions .left { display: flex; gap: 15px; }
