@@ -184,7 +184,10 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
                   <input
                     type="text"
                     value={form.username}
-                    onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s/g, '_') })}
+                    onChange={e => setForm({ 
+                      ...form, 
+                      username: e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9._]/g, '')
+                    })}
                   />
                 </div>
               </div>

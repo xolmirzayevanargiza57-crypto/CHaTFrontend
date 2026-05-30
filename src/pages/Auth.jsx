@@ -55,7 +55,17 @@ const Auth = () => {
           )}
           <div className="form-group">
             <label>{t.username}</label>
-            <input type="text" name="username" required value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toLowerCase()})} placeholder="username" />
+            <input 
+              type="text" 
+              name="username" 
+              required 
+              value={formData.username} 
+              onChange={e => setFormData({
+                ...formData, 
+                username: e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9._]/g, '')
+              })} 
+              placeholder="username" 
+            />
           </div>
           <div className="form-group">
             <label>{t.password}</label>
