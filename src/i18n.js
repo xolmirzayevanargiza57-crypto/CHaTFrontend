@@ -79,7 +79,13 @@ export const translations = {
     follow: "Kuzatish",
     unfollow: "Kuzatishni to'xtatish",
     viewArchive: "Arxivni ko'rish",
-    noPostsYet: "Hali postlar yo'q"
+    noPostsYet: "Hali postlar yo'q",
+    newPost: "Yangi post",
+    share: "Ulashish",
+    selectPhotos: "Rasm yoki videolar tanlang",
+    writeCaption: "Izoh yozing...",
+    shareAsReel: "Reel sifatida ulashish",
+    uploadingStatus: "yuklanmoqda..."
   },
   ru: {
     login: "Вход",
@@ -161,7 +167,13 @@ export const translations = {
     follow: "Подписаться",
     unfollow: "Отписаться",
     viewArchive: "Просмотреть архив",
-    noPostsYet: "Постов пока нет"
+    noPostsYet: "Постов пока нет",
+    newPost: "Новый пост",
+    share: "Поделиться",
+    selectPhotos: "Выберите фото или видео",
+    writeCaption: "Напишите подпись...",
+    shareAsReel: "Поделиться как Reel",
+    uploadingStatus: "загрузка..."
   },
   en: {
     login: "Login",
@@ -243,6 +255,12 @@ export const translations = {
     follow: "Follow",
     unfollow: "Unfollow",
     viewArchive: "View Archive",
-    noPostsYet: "No posts yet"
+    noPostsYet: "No posts yet",
+    newPost: "New Post",
+    share: "Share",
+    selectPhotos: "Select Photos or Videos",
+    writeCaption: "Write a caption...",
+    shareAsReel: "Share as Reel",
+    uploadingStatus: "uploading..."
   }
 };

@@ -7,6 +7,7 @@ import {
   Camera, Lock, Eye, EyeOff, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import BottomNav from '../components/BottomNav';
 
 /* ─────────────────────────── EDIT MODAL ─────────────────────────── */
 const EditProfileModal = ({ profileData, onClose, onSaved }) => {
@@ -447,10 +448,13 @@ const Profile = () => {
 
             <div className="ip-preview-sidebar">
               <div className="ip-preview-owner">
-                <img
-                  src={profileData.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${profileData.username}`}
-                  alt=""
-                />
+                {profileData.avatar ? (
+                  <img src={profileData.avatar} alt="" />
+                ) : (
+                  <div className="ip-preview-avatar-placeholder">
+                    {profileData.firstName?.[0] || profileData.username?.[0]}
+                  </div>
+                )}
                 <b>{profileData.username}</b>
                 {isOwnProfile && (
                   <button
@@ -482,6 +486,8 @@ const Profile = () => {
           }}
         />
       )}
+
+      <BottomNav />
 
       <style jsx="true">{`
         .insta-profile {
@@ -764,6 +770,18 @@ const Profile = () => {
           border: 1px solid var(--border);
         }
         .ip-preview-owner b { flex: 1; font-size: 0.95rem; }
+        .ip-preview-avatar-placeholder {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: var(--bg-secondary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 0.9rem;
+          border: 1px solid var(--border);
+        }
         .ip-delete-btn {
           color: #ed4956;
           padding: 6px;

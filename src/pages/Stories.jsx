@@ -14,6 +14,8 @@ const Stories = () => {
     const [loading, setLoading] = useState(true);
     const [muted, setMuted] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [replyText, setReplyText] = useState('');
+    const [sendingReply, setSendingReply] = useState(false);
 
     useEffect(() => {
         fetchStories();
@@ -84,6 +86,42 @@ const Stories = () => {
         }
     };
 
+    const handleLike = async () => {
+        try {
+            const res = await axios.post(`/api/stories/${currentStory._id}/like`);
+            setGroups(prev => prev.map((g, gi) => gi === groupIndex 
+                ? { ...g, stories: g.stories.map((s, si) => si === storyIndex 
+                    ? { ...s, hasLiked: res.data.hasLiked, likesCount: res.data.likesCount } 
+                    : s) } 
+                : g));
+        } catch (err) { console.error(err); }
+    };
+
+    const handleReply = async (e) => {
+        e.preventDefault();
+        if (!replyText.trim() || sendingReply) return;
+        setSendingReply(true);
+        try {
+            await axios.post(`/api/messages/${currentGroup.user._id}`, {
+                text: replyText,
+                caption: `Replied to your story`,
+                fileUrl: currentStory.fileUrl,
+                fileType: currentStory.fileType
+            });
+            setReplyText('');
+            alert("Sent!");
+        } catch (err) { console.error(err); }
+        finally { setSendingReply(false); }
+    };
+
+    const handleRemove = async () => {
+        if (!window.confirm("Storyni o'chirasizmi?")) return;
+        try {
+            await axios.delete(`/api/stories/${currentStory._id}`);
+            fetchStories();
+        } catch (err) { console.error(err); }
+    };
+
     if (loading) return <div className="stories-loader">Loading...</div>;
     if (!currentGroup) return null;
 
@@ -100,10 +138,17 @@ const Stories = () => {
                     </div>
                     <div className="story-user-info">
                         <div className="user-avatar">
-                            <img src={currentGroup.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${currentGroup.user.username}`} alt="v" />
+                            {currentGroup.user.avatar ? (
+                                <img src={currentGroup.user.avatar} alt="v" />
+                            ) : (
+                                <div className="avatar-placeholder">{currentGroup.user.username[0]}</div>
+                            )}
                         </div>
                         <span className="username">{currentGroup.user.username}</span>
                         <span className="time">{new Date(currentStory.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        {currentGroup.user._id === currentUser.id && (
+                            <button className="remove-btn" onClick={handleRemove}><MoreHorizontal size={20} /></button>
+                        )}
                         <button className="close-btn" onClick={() => navigate(-1)}><X size={24} /></button>
                     </div>
                 </header>
@@ -127,14 +172,21 @@ const Stories = () => {
                 </main>
 
                 <footer className="story-footer">
-                    <div className="reply-box">
-                        <input type="text" placeholder="Reply to story..." />
-                        <button><Send size={20} /></button>
-                    </div>
+                    <form className="reply-box" onSubmit={handleReply}>
+                        <input 
+                            type="text" 
+                            placeholder="Reply to story..." 
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                        />
+                        <button type="submit" disabled={sendingReply}><Send size={20} /></button>
+                    </form>
                     <button onClick={() => setMuted(!muted)}>
                         {muted ? <VolumeX size={24} /> : <Volume2 size={24} />}
                     </button>
-                    <button><Heart size={24} /></button>
+                    <button onClick={handleLike} className={currentStory.hasLiked ? 'liked' : ''}>
+                        <Heart size={24} fill={currentStory.hasLiked ? "#ed4956" : "none"} color={currentStory.hasLiked ? "#ed4956" : "white"} />
+                    </button>
                 </footer>
             </div>
 
@@ -150,9 +202,11 @@ const Stories = () => {
                 .story-user-info { display: flex; align-items: center; gap: 10px; color: white; }
                 .user-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; }
                 .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .avatar-placeholder { width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center; font-weight: 700; }
                 .username { font-weight: 700; font-size: 0.9rem; flex: 1; }
                 .time { font-size: 0.8rem; opacity: 0.7; margin-right: 10px; }
-                .close-btn { background: transparent; border: none !important; color: white; cursor: pointer; }
+                .close-btn, .remove-btn { background: transparent; border: none !important; color: white; cursor: pointer; }
+                .liked { color: #ed4956 !important; }
 
                 .story-content { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
                 .story-content img, .story-content video { width: 100%; max-height: 100%; object-fit: contain; }

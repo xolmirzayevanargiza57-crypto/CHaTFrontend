@@ -4,8 +4,17 @@ import { useAuth } from '../context/AuthContext';
 import BottomNav from '../components/BottomNav';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import logoImg from '/chatlogo.png';
+import { translations } from '../i18n';
+import ShareModal from '../components/ShareModal';
 
-const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute }) => {
+const formatCount = (count) => {
+    if (count < 10000) return count;
+    if (count < 1000000) return (count / 1000).toFixed(0) + 'k';
+    return (count / 1000000).toFixed(1) + 'm';
+};
+
+const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, onShare }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [liked, setLiked] = useState(post.likes.includes(user.id));
@@ -106,14 +115,14 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute }) => {
                         />
                     </button>
                     <button><MessageCircle size={24} /></button>
-                    <button><Send size={24} /></button>
+                    <button onClick={() => onShare(post)}><Send size={24} /></button>
                 </div>
                 <button><Bookmark size={24} /></button>
             </div>
 
             {/* Info */}
             <div className="ig-post-info">
-                <span className="ig-likes">{likeCount} likes</span>
+                <span className="ig-likes">{formatCount(likeCount)} {translations[lang || 'uz']?.likes || 'likes'}</span>
                 <div className="ig-caption">
                     <b>{post.user.username}</b>{' '}
                     {isExpanded || (post.caption || '').length < 80
@@ -136,6 +145,7 @@ const Home = () => {
     const [storyGroups, setStoryGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [globalMuted, setGlobalMuted] = useState(true);
+    const [sharingPost, setSharingPost] = useState(null);
 
     useEffect(() => {
         fetchFeed();
@@ -152,10 +162,13 @@ const Home = () => {
     const fetchFeed = async () => {
         try {
             const res = await axios.get('/api/posts/feed');
-            setPosts(res.data);
+            // Randomize feed
+            setPosts(res.data.sort(() => Math.random() - 0.5));
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
+
+    const { lang, token } = useAuth();
 
     const handleLike = async (postId) => {
         try {
@@ -179,9 +192,17 @@ const Home = () => {
         <div className="ig-home">
             {/* Mobile-only header */}
             <header className="ig-home-header">
-                <h1 className="ig-logo">CHaT</h1>
+                <div className="ig-logo-container" onClick={() => navigate('/')}>
+                    <img src={logoImg} alt="CHaT" className="ig-logo-img" />
+                </div>
                 <div className="ig-header-actions">
-                    <button onClick={() => navigate('/chat')}><Send size={24} /></button>
+                    {!token ? (
+                        <button className="ig-login-btn" onClick={() => navigate('/login')}>
+                            {translations[lang || 'uz']?.login || 'Login'}
+                        </button>
+                    ) : (
+                        <button onClick={() => navigate('/chat')}><Send size={24} /></button>
+                    )}
                 </div>
             </header>
 
@@ -191,18 +212,21 @@ const Home = () => {
                     <div className="ig-story-ring own">
                         {user?.avatar
                             ? <img src={user.avatar} alt="" />
-                            : <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>+</span>
+                            : <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{user?.username?.[0] || '+'}</span>
                         }
                     </div>
-                    <span>Your story</span>
+                    <span>{translations[lang || 'uz']?.story || 'Your story'}</span>
                 </div>
                 {storyGroups.map(group => (
                     <div key={group.user._id} className="ig-story-item" onClick={() => navigate(`/stories/${group.user._id}`)}>
                         <div className={`ig-story-ring ${group.stories.some(s => !s.hasViewed) ? 'unseen' : 'seen'}`}>
-                            <img
-                                src={group.user.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${group.user.username}`}
-                                alt=""
-                            />
+                            {group.user.avatar ? (
+                                <img src={group.user.avatar} alt="" />
+                            ) : (
+                                <div className="ig-story-placeholder">
+                                    {group.user.username[0]}
+                                </div>
+                            )}
                         </div>
                         <span>{group.user.username}</span>
                     </div>
@@ -235,11 +259,14 @@ const Home = () => {
                         onDelete={handleDeletePost}
                         isMuted={globalMuted}
                         onToggleMute={() => setGlobalMuted(!globalMuted)}
+                        lang={lang}
+                        onShare={setSharingPost}
                     />
                 ))}
             </main>
 
             <BottomNav />
+            {sharingPost && <ShareModal post={sharingPost} onClose={() => setSharingPost(null)} />}
 
             <style jsx="true">{`
                 .ig-home { background: var(--bg-primary); min-height: 100vh; }
@@ -260,8 +287,17 @@ const Home = () => {
                         z-index: 100;
                     }
                 }
-                .ig-logo { font-size: 1.6rem; font-weight: 900; letter-spacing: -1px; }
+                .ig-logo-container { cursor: pointer; display: flex; align-items: center; }
+                .ig-logo-img { height: 32px; width: auto; object-fit: contain; }
                 .ig-header-actions button { color: var(--text-primary); }
+                .ig-login-btn { 
+                    background: var(--accent); 
+                    color: white !important; 
+                    padding: 6px 16px !important; 
+                    border-radius: 8px; 
+                    font-weight: 600; 
+                    font-size: 0.9rem;
+                }
 
                 /* Stories */
                 .ig-stories-bar {
@@ -312,6 +348,18 @@ const Home = () => {
                     align-items: center;
                     justify-content: center;
                     background: var(--bg-secondary);
+                }
+                .ig-story-placeholder {
+                    width: 58px;
+                    height: 58px;
+                    border-radius: 50%;
+                    background: var(--bg-secondary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    font-size: 1.2rem;
+                    border: 3px solid var(--bg-primary);
                 }
                 .ig-story-item > span {
                     font-size: 0.73rem;

@@ -3,8 +3,17 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Heart, Music, Loader, Volume2, VolumeX, MessageCircle, Send, Bookmark, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import BottomNav from '../components/BottomNav';
+import ShareModal from '../components/ShareModal';
+import { translations } from '../i18n';
 
-const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute }) => {
+const formatCount = (count) => {
+    if (count < 10000) return count;
+    if (count < 1000000) return (count / 1000).toFixed(0) + 'k';
+    return (count / 1000000).toFixed(1) + 'm';
+};
+
+const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare }) => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const videoRef = useRef(null);
@@ -80,13 +89,13 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute }) => {
                             fill={post.likes.includes(user.id) ? "#ed4956" : "none"}
                             color={post.likes.includes(user.id) ? "#ed4956" : "white"}
                         />
-                        <span>{post.likes.length}</span>
+                        <span>{formatCount(post.likes.length)}</span>
                     </div>
                     <div className="reel-action">
                         <MessageCircle size={28} color="white" />
                         <span>0</span>
                     </div>
-                    <div className="reel-action">
+                    <div className="reel-action" onClick={() => onShare(post)}>
                         <Send size={28} color="white" />
                     </div>
                     <div className="reel-action">
@@ -138,17 +147,19 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute }) => {
 };
 
 const Reels = () => {
-    const { user } = useAuth();
+    const { user, lang } = useAuth();
     const [reels, setReels] = useState([]);
     const [loading, setLoading] = useState(true);
     const [globalMuted, setGlobalMuted] = useState(false);
+    const [sharingPost, setSharingPost] = useState(null);
 
     useEffect(() => { fetchReels(); }, []);
 
     const fetchReels = async () => {
         try {
             const res = await axios.get('/api/posts/feed');
-            setReels(res.data.filter(p => p.fileType === 'video'));
+            const data = res.data.filter(p => p.fileType === 'video');
+            setReels(data.sort(() => Math.random() - 0.5));
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
@@ -194,9 +205,13 @@ const Reels = () => {
                         onDelete={handleDelete}
                         isMuted={globalMuted}
                         onToggleMute={() => setGlobalMuted(!globalMuted)}
+                        onShare={setSharingPost}
                     />
                 ))}
             </div>
+
+            <BottomNav />
+            {sharingPost && <ShareModal post={sharingPost} onClose={() => setSharingPost(null)} />}
 
             <style jsx="true">{`
                 .reels-page {
@@ -342,8 +357,8 @@ const Reels = () => {
                 }
 
                 @media (max-width: 768px) {
-                    .reel-slide { max-width: 100%; }
-                    .reel-slide video { object-fit: cover; }
+                    .reel-slide { max-width: 100%; height: calc(100vh - 60px); }
+                    .reel-slide video { object-fit: contain; background: #000; }
                 }
             `}</style>
         </div>

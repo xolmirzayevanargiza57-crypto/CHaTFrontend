@@ -16,7 +16,7 @@ import Sidebar from './components/Sidebar';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
-  return token ? children : <Navigate to="/" />;
+  return token ? children : <Navigate to="/login" />;
 };
 
 const ProfileWithKey = () => {
@@ -27,14 +27,14 @@ const ProfileWithKey = () => {
 const MainLayout = ({ children }) => {
   const { token } = useAuth();
   const location = useLocation();
-  
-  // Don't show sidebar on auth page or stories page
-  const hideSidebar = !token || location.pathname.startsWith('/stories');
-  
+
+  // Don't show nav sidebar on auth, stories, chat pages
+  const hideSidebar = !token || location.pathname.startsWith('/stories') || location.pathname.startsWith('/chat') || location.pathname === '/login';
+
   if (hideSidebar) {
     return <>{children}</>;
   }
-  
+
   return (
     <div className="app-layout">
       <Sidebar />
@@ -52,7 +52,8 @@ const AppContent = () => {
     <Router>
       <MainLayout>
         <Routes>
-          <Route path="/" element={token ? <Home /> : <Auth />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={token ? <Navigate to="/" /> : <Auth />} />
           <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
@@ -62,6 +63,7 @@ const AppContent = () => {
           <Route path="/profile" element={<ProtectedRoute><Profile key="me" /></ProtectedRoute>} />
           <Route path="/profile/:userId" element={<ProtectedRoute><ProfileWithKey /></ProtectedRoute>} />
           <Route path="/stories/:userId" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </MainLayout>
     </Router>

@@ -54,9 +54,9 @@ const Create = () => {
         <div className="create-page">
             <header className="create-header">
                 <button onClick={() => navigate(-1)}><ArrowLeft size={24} /></button>
-                <h2>New Post</h2>
+                <h2>{t.newPost}</h2>
                 <button className="share-btn" disabled={!file || uploading} onClick={handleUpload}>
-                    {uploading ? <Loader className="spin" size={20} /> : 'Share'}
+                    {uploading ? <Loader className="spin" size={20} /> : t.share}
                 </button>
             </header>
 
@@ -70,8 +70,8 @@ const Create = () => {
                     ) : (
                         <div className="select-placeholder">
                             <ImageIcon size={48} />
-                            <p>Select Photos or Videos</p>
-                            <button className="select-btn">Select from gallery</button>
+                            <p>{t.selectPhotos}</p>
+                            <button className="select-btn">{t.gallery}</button>
                         </div>
                     )}
                 </div>
@@ -80,7 +80,7 @@ const Create = () => {
 
                 <div className="caption-area">
                     <textarea 
-                        placeholder="Write a caption..." 
+                        placeholder={t.writeCaption}
                         value={caption} 
                         onChange={(e) => setCaption(e.target.value)}
                         rows="5"
@@ -89,7 +89,7 @@ const Create = () => {
 
                 {file && file.type.startsWith('video/') && (
                     <div className="toggle-section">
-                        <span>Share as Reel</span>
+                        <span>{t.shareAsReel}</span>
                         <input type="checkbox" checked={isReel} onChange={e => setIsReel(e.target.checked)} />
                     </div>
                 )}
@@ -99,7 +99,7 @@ const Create = () => {
                         <div className="progress-bar-bg">
                             <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }}></div>
                         </div>
-                        <span>{uploadProgress}% yuklanmoqda...</span>
+                        <span>{uploadProgress}% {t.uploadingStatus}</span>
                     </div>
                 )}
             </main>
