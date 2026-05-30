@@ -5,6 +5,8 @@ import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
 import { Heart, MessageCircle, Send, Trash2, ArrowLeft, Loader, MoreVertical } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ShareModal from '../components/ShareModal';
+
 
 const PostDetail = () => {
     const { user, lang } = useAuth();
@@ -14,6 +16,8 @@ const PostDetail = () => {
     const [post, setPost] = useState(null);
     const [commentText, setCommentText] = useState('');
     const [loading, setLoading] = useState(true);
+    const [sharingPost, setSharingPost] = useState(null);
+
 
     useEffect(() => {
         fetchPost();
@@ -85,8 +89,9 @@ const PostDetail = () => {
                         <Heart size={26} fill={post.likes.includes(user.id) ? "#ff3b30" : "none"} color={post.likes.includes(user.id) ? "#ff3b30" : "currentColor"} />
                     </button>
                     <button><MessageCircle size={26} /></button>
-                    <button><Send size={26} /></button>
+                    <button onClick={() => setSharingPost(post)}><Send size={26} /></button>
                 </div>
+
 
                 <div className="post-metadata">
                     <p className="likes-count"><b>{post.likes.length} likes</b></p>
@@ -119,6 +124,8 @@ const PostDetail = () => {
             </div>
 
             <BottomNav />
+            {sharingPost && <ShareModal post={sharingPost} onClose={() => setSharingPost(null)} />}
+
 
             <style jsx="true">{`
                 .post-detail-page { background: var(--bg-primary); min-height: 100vh; padding-bottom: 120px; }
