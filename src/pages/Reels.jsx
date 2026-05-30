@@ -212,7 +212,11 @@ const Reels = () => {
         try {
             await axios.delete(`/api/posts/${postId}`);
             setReels(reels.filter(p => p._id !== postId));
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            const msg = err.response?.data?.message || err.message;
+            alert("Xatolik: " + msg); 
+        }
+
     };
 
     if (loading) return (
