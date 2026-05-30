@@ -28,6 +28,52 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
   });
   const fileInputRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef(null);
+  const [stream, setStream] = useState(null);
+
+  const startCamera = async () => {
+    try {
+      setShowCamera(true);
+      const s = await navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 400, facingMode: 'user' } });
+      setStream(s);
+      if (videoRef.current) videoRef.current.srcObject = s;
+    } catch (err) {
+      showMsg("Kameraga ruxsat berilmadi", 'err');
+      setShowCamera(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    setStream(null);
+    setShowCamera(false);
+  };
+
+  const takePhoto = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+      setUploadingAvatar(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const uploadRes = await axios.post('/api/upload', formData);
+        setForm(prev => ({ ...prev, avatar: uploadRes.data.fileUrl }));
+        showMsg("Rasm olindi ✓", 'ok');
+        stopCamera();
+      } catch (err) {
+        showMsg("Yuklashda xato", 'err');
+      } finally { setUploadingAvatar(false); }
+    }, 'image/jpeg');
+  };
 
   // Password fields
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
@@ -131,25 +177,40 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
             <div className="ep-form">
               <div className="ep-avatar-section">
                 <div className="ep-avatar-preview">
-                  {form.avatar ? (
+                  {showCamera ? (
+                    <video ref={videoRef} autoPlay playsInline className="ep-camera-feed" />
+                  ) : form.avatar ? (
                     <img src={form.avatar} alt="v" />
                   ) : (
                     <div className="avatar-placeholder">{form.firstName?.[0] || form.username?.[0]}</div>
                   )}
                   {uploadingAvatar && <div className="avatar-loading"><Loader className="spin" size={20} /></div>}
                 </div>
+                
                 <div className="ep-avatar-actions">
-                  <button 
-                    className="ep-change-photo" 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingAvatar}
-                  >
-                    {t.changePhoto}
-                  </button>
-                  {form.avatar && (
-                    <button className="ep-remove-photo" onClick={handleRemoveAvatar}>
-                      {lang === 'uz' ? "O'chirish" : "Remove"}
-                    </button>
+                  {showCamera ? (
+                    <div className="ep-camera-controls">
+                       <button className="ep-take-photo" onClick={takePhoto}>
+                         <CheckCircle size={18} /> {lang === 'uz' ? 'Tushirish' : 'Snap'}
+                       </button>
+                       <button className="ep-cancel-camera" onClick={stopCamera}>
+                         {t.cancel}
+                       </button>
+                    </div>
+                  ) : (
+                    <div className="ep-photo-buttons">
+                      <button className="ep-action-btn" onClick={() => fileInputRef.current?.click()}>
+                        <Plus size={16} /> {lang === 'uz' ? 'Galereya' : 'Gallery'}
+                      </button>
+                      <button className="ep-action-btn" onClick={startCamera}>
+                        <Camera size={16} /> {lang === 'uz' ? 'Kamera' : 'Camera'}
+                      </button>
+                      {form.avatar && (
+                        <button className="ep-action-btn red" onClick={handleRemoveAvatar}>
+                          <Trash2 size={16} /> {lang === 'uz' ? "O'chirish" : "Remove"}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <input 
@@ -1051,6 +1112,24 @@ const Profile = () => {
           outline: none;
         }
         .ep-field textarea { resize: vertical; font-family: inherit; line-height: 1.4; }
+        .ep-avatar-preview { width: 120px; height: 120px; border-radius: 50%; background: var(--bg-secondary); overflow: hidden; position: relative; border: 2px solid var(--border); }
+        .ep-avatar-preview img, .ep-camera-feed { width: 100%; height: 100%; object-fit: cover; }
+        .ep-camera-feed { transform: scaleX(-1); background: #000; }
+        
+        .ep-avatar-actions { width: 100%; }
+        .ep-photo-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .ep-action-btn { 
+          display: flex; align-items: center; gap: 6px; padding: 8px 16px; 
+          border-radius: 10px; background: var(--bg-secondary); color: var(--text-primary); 
+          font-size: 0.9rem; font-weight: 600; transition: 0.2s;
+        }
+        .ep-action-btn:hover { background: var(--border); }
+        .ep-action-btn.red { color: #ff3b30; }
+        .ep-action-btn.red:hover { background: rgba(255,59,48,0.1); }
+        
+        .ep-camera-controls { display: flex; gap: 10px; }
+        .ep-take-photo { background: var(--accent); color: white; padding: 8px 20px; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .ep-cancel-camera { background: rgba(0,0,0,0.1); padding: 8px 20px; border-radius: 10px; }
         .ep-counter { font-size: 0.75rem; color: var(--text-secondary); text-align: right; margin-top: -10px; }
 
         .ep-save-btn {
