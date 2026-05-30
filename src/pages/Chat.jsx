@@ -7,6 +7,7 @@ import ChatWindow from '../components/ChatWindow';
 
 let socket;
 
+// Build trigger: 2026-05-30T12:09:00Z
 const Chat = () => {
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
