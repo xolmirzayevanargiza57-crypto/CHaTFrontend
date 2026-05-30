@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { X, Search, Check } from 'lucide-react';
+import { X, Search, Check, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const ShareModal = ({ post, onClose }) => {
@@ -18,8 +18,28 @@ const ShareModal = ({ post, onClose }) => {
         try {
             const res = await axios.get('/api/users/friends');
             setFriends(res.data);
+            setAllResults(res.data);
         } catch (err) { console.error(err); }
     };
+
+    const [allResults, setAllResults] = useState([]);
+    const [searchingAll, setSearchingAll] = useState(false);
+
+    useEffect(() => {
+        if (searchTerm.trim().length > 0) {
+            const timer = setTimeout(async () => {
+                setSearchingAll(true);
+                try {
+                    const res = await axios.get(`/api/users/search?q=${encodeURIComponent(searchTerm)}`);
+                    setAllResults(res.data);
+                } catch (err) { console.error(err); }
+                finally { setSearchingAll(false); }
+            }, 400);
+            return () => clearTimeout(timer);
+        } else {
+            setAllResults(friends);
+        }
+    }, [searchTerm, friends]);
 
     const toggleSelect = (id) => {
         setSelectedFriends(prev => 
@@ -66,34 +86,30 @@ const ShareModal = ({ post, onClose }) => {
                 </div>
 
                 <div className="share-friends-grid">
-                    {friends
-                        .filter(f => {
-                            const name = (f.firstName || '').toLowerCase();
-                            const last = (f.lastName || '').toLowerCase();
-                            const user = (f.username || '').toLowerCase();
-                            const s = searchTerm.toLowerCase();
-                            return name.includes(s) || last.includes(s) || user.includes(s);
-                        })
-                        .map(friend => (
-                        <div 
-                            key={friend._id} 
-                            className={`share-friend-item ${selectedFriends.includes(friend._id) ? 'selected' : ''}`}
-                            onClick={() => toggleSelect(friend._id)}
-                        >
-                            <div className="share-avatar">
-                                {friend.avatar ? (
-                                    <img src={friend.avatar} alt="" />
-                                ) : (
-                                    <span>{friend.firstName?.[0] || friend.username?.[0]}</span>
-                                )}
-                                {selectedFriends.includes(friend._id) && (
-                                    <div className="select-check"><Check size={12} color="white" /></div>
-                                )}
+                    {searchingAll ? (
+                        <div className="share-loader"><Loader className="spin" size={24} /></div>
+                    ) : (
+                        allResults.map(friend => (
+                            <div 
+                                key={friend._id} 
+                                className={`share-friend-item ${selectedFriends.includes(friend._id) ? 'selected' : ''}`}
+                                onClick={() => toggleSelect(friend._id)}
+                            >
+                                <div className="share-avatar">
+                                    {friend.avatar ? (
+                                        <img src={friend.avatar} alt="" />
+                                    ) : (
+                                        <span>{friend.firstName?.[0] || friend.username?.[0]}</span>
+                                    )}
+                                    {selectedFriends.includes(friend._id) && (
+                                        <div className="select-check"><Check size={12} color="white" /></div>
+                                    )}
+                                </div>
+                                <span className="share-name">{friend.username}</span>
                             </div>
-                            <span className="share-name">{friend.username}</span>
-                        </div>
-                    ))}
-                    {friends.length === 0 && <p className="no-friends">No friends to share with</p>}
+                        ))
+                    )}
+                    {allResults.length === 0 && !searchingAll && <p className="no-friends">No users found</p>}
                 </div>
 
                 <footer className="share-footer">

@@ -72,13 +72,30 @@ const SearchPage = () => {
                                 <span className="s-username">{u.username}</span>
                                 <span className="s-name">{u.firstName} {u.lastName}</span>
                             </div>
-                            <button
-                                className="s-msg-btn"
-                                onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}
-                                title="Send message"
-                            >
-                                <MessageSquare size={20} />
-                            </button>
+                            <div className="s-actions">
+                                <button
+                                    className="s-action-btn follow"
+                                    onClick={async (e) => { 
+                                        e.stopPropagation(); 
+                                        try {
+                                            await axios.post(`/api/users/add-friend/${u._id}`);
+                                            alert(lang === 'uz' ? "Do'stlarga qo'shildi!" : "Added to friends!");
+                                        } catch(err) {
+                                            alert(err.response?.data?.message || "Xatolik");
+                                        }
+                                    }}
+                                    title="Add to Chat"
+                                >
+                                    {lang === 'uz' ? "Qo'shish" : "Add"}
+                                </button>
+                                <button
+                                    className="s-action-btn msg"
+                                    onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}
+                                    title="Send message"
+                                >
+                                    <MessageSquare size={18} />
+                                </button>
+                            </div>
                         </div>
                     ))
                 ) : query.trim().length > 0 && !loading ? (
@@ -192,15 +209,31 @@ const SearchPage = () => {
                     color: var(--text-secondary);
                 }
 
-                .s-msg-btn {
-                    color: var(--text-secondary);
+                .s-actions {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+                .s-action-btn {
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                }
+                .s-action-btn.follow {
+                    background: var(--accent);
+                    color: white;
+                }
+                .s-action-btn.msg {
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
                     padding: 8px;
                     border-radius: 50%;
-                    transition: background 0.15s;
                 }
-                .s-msg-btn:hover {
-                    background: var(--bg-secondary);
-                    color: var(--accent);
+                .s-action-btn:hover {
+                    opacity: 0.85;
+                    transform: scale(1.05);
                 }
 
                 .search-state {
