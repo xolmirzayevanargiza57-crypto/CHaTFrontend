@@ -11,6 +11,9 @@ if (typeof window !== 'undefined') {
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 axios.defaults.baseURL = apiUrl;
+console.log(`[APP] Connecting to: ${apiUrl}`);
+console.log(`[APP] Build Date: ${new Date().toLocaleString()}`);
+
 
 // Add token to all requests
 axios.interceptors.request.use(config => {
