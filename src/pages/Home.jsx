@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
+
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import BottomNav from '../components/BottomNav';
@@ -14,7 +15,7 @@ const formatCount = (count) => {
     return (count / 1000000).toFixed(1) + 'm';
 };
 
-const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, onShare }) => {
+const PostCard = memo(({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, onShare }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [liked, setLiked] = useState(post.likes.includes(user.id));
@@ -146,7 +147,8 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, o
             </div>
         </article>
     );
-};
+});
+
 
 const Home = () => {
     const { user } = useAuth();

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
+import ShareModal from '../components/ShareModal';
+
 
 /* ─────────────────────────── EDIT MODAL ─────────────────────────── */
 const EditProfileModal = ({ profileData, onClose, onSaved }) => {
@@ -319,6 +321,8 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [sharingPost, setSharingPost] = useState(null);
+
 
   const fileInputRef = useRef(null);
   const storyInputRef = useRef(null);
@@ -393,8 +397,18 @@ const Profile = () => {
       await axios.delete(`/api/posts/${postId}`);
       setPosts(posts.filter(p => p._id !== postId));
       setSelectedPost(null);
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err);
+      if (err.response?.status === 404) {
+          // Already deleted or moved
+          setPosts(posts.filter(p => p._id !== postId));
+          setSelectedPost(null);
+      } else {
+          alert(lang === 'uz' ? "O'chirishda xatolik: " + (err.response?.data?.message || err.message) : "Error deleting post");
+      }
+    }
   };
+
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
@@ -649,12 +663,17 @@ const Profile = () => {
                     onClick={() => handleLikePost(selectedPost._id)}
                     style={{ cursor: 'pointer' }}
                   />
-                  <Send size={24} onClick={() => { setShowShareModal(selectedPost); setSelectedPost(null); }} />
+                  <Send size={24} onClick={() => { setSharingPost(selectedPost); setSelectedPost(null); }} />
                 </div>
             </div>
           </div>
         </div>
       )}
+
+      {sharingPost && (
+          <ShareModal post={sharingPost} onClose={() => setSharingPost(null)} />
+      )}
+
 
       {/* ── Edit Profile Modal ── */}
       {showEditModal && (
