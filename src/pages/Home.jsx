@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import BottomNav from '../components/BottomNav';
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Volume2, VolumeX, Trash2, Plus, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logoImg from '/chatlogo.png';
 import { translations } from '../i18n';
@@ -156,6 +156,8 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [globalMuted, setGlobalMuted] = useState(true);
     const [sharingPost, setSharingPost] = useState(null);
+    const [uploadingStory, setUploadingStory] = useState(false);
+    const storyInputRef = useRef(null);
 
     useEffect(() => {
         fetchFeed();
@@ -176,6 +178,24 @@ const Home = () => {
             setPosts(res.data.sort(() => Math.random() - 0.5));
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
+    };
+
+    const handleStoryUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploadingStory(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const uploadRes = await axios.post('/api/upload', formData);
+            await axios.post('/api/stories', {
+                fileUrl: uploadRes.data.fileUrl,
+                fileType: file.type.startsWith('video/') ? 'video' : 'image'
+            });
+            fetchStories();
+            alert(lang === 'uz' ? "Story joylandi!" : "Story uploaded!");
+        } catch (err) { alert(lang === 'uz' ? "Xatolik yuz berdi" : "Error uploading story"); }
+        finally { setUploadingStory(false); if (storyInputRef.current) storyInputRef.current.value = ''; }
     };
 
     const { lang, token } = useAuth();
@@ -218,12 +238,16 @@ const Home = () => {
 
             {/* Stories Bar */}
             <div className="ig-stories-bar">
-                <div className="ig-story-item" onClick={() => navigate('/profile')}>
+                <input type="file" ref={storyInputRef} hidden onChange={handleStoryUpload} accept="image/*,video/*" />
+                <div className="ig-story-item" onClick={() => storyInputRef.current.click()}>
                     <div className="ig-story-ring own">
                         {user?.avatar
                             ? <img src={user.avatar} alt="" />
                             : <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{user?.username?.[0] || '+'}</span>
                         }
+                        <div className="ig-story-add-btn">
+                            {uploadingStory ? <Loader className="spin" size={12} /> : <Plus size={12} color="white" />}
+                        </div>
                     </div>
                     <span>{translations[lang || 'uz']?.story || 'Your story'}</span>
                 </div>
@@ -346,7 +370,26 @@ const Home = () => {
                     background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
                 }
                 .ig-story-ring.seen { background: var(--border); }
-                .ig-story-ring.own { background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); }
+                .ig-story-ring.own { 
+                    background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); 
+                    position: relative;
+                }
+                .ig-story-add-btn {
+                    position: absolute;
+                    bottom: 2px;
+                    right: 2px;
+                    background: var(--accent);
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid var(--bg-primary);
+                    z-index: 5;
+                }
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
                 .ig-story-ring img, .ig-story-ring span {
                     width: 58px;

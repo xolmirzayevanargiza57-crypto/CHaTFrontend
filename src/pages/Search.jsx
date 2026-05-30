@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { translations } from '../i18n';
 import BottomNav from '../components/BottomNav';
 import { Search as SearchIcon, Loader, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 const SearchPage = () => {
     const navigate = useNavigate();
     const { lang } = useAuth();
-    const t = translations[lang];
+    const t = translations[lang || 'uz'] || translations['uz'];
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);

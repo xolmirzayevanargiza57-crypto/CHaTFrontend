@@ -151,6 +151,8 @@ const Reels = () => {
     const [loading, setLoading] = useState(true);
     const [globalMuted, setGlobalMuted] = useState(false);
     const [sharingPost, setSharingPost] = useState(null);
+    const containerRef = useRef(null);
+    const isScrolling = useRef(false);
 
     useEffect(() => { fetchReels(); }, []);
 
@@ -161,6 +163,38 @@ const Reels = () => {
             setReels(data.sort(() => Math.random() - 0.5));
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
+    };
+
+    const handleWheel = (e) => {
+        if (isScrolling.current) return;
+        
+        const container = containerRef.current;
+        if (!container) return;
+
+        if (Math.abs(e.deltaY) < 30) return;
+
+        e.preventDefault();
+        isScrolling.current = true;
+
+        const delta = e.deltaY;
+        const slideHeight = window.innerHeight;
+        const currentScroll = container.scrollTop;
+        
+        let targetScroll;
+        if (delta > 0) {
+            targetScroll = Math.ceil((currentScroll + 1) / slideHeight) * slideHeight;
+        } else {
+            targetScroll = Math.floor((currentScroll - 1) / slideHeight) * slideHeight;
+        }
+
+        container.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+        });
+
+        setTimeout(() => {
+            isScrolling.current = false;
+        }, 800);
     };
 
     const handleLike = async (postId) => {
@@ -189,7 +223,11 @@ const Reels = () => {
 
     return (
         <div className="reels-page">
-            <div className="reels-scroll">
+            <div 
+                className="reels-scroll" 
+                ref={containerRef}
+                onWheel={handleWheel}
+            >
                 {reels.length === 0 ? (
                     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', flexDirection: 'column', gap: 12 }}>
                         <Music size={48} opacity={0.5} />
@@ -223,6 +261,7 @@ const Reels = () => {
                     height: 100%;
                     overflow-y: scroll;
                     scroll-snap-type: y mandatory;
+                    scroll-snap-stop: always;
                     scrollbar-width: none;
                     -ms-overflow-style: none;
                 }
@@ -234,6 +273,7 @@ const Reels = () => {
                     max-width: 430px;
                     margin: 0 auto;
                     scroll-snap-align: start;
+                    scroll-snap-stop: always;
                     position: relative;
                     background: #000;
                     display: flex;

@@ -33,7 +33,7 @@ const Chat = () => {
     fetchFriends();
     
     if (!socket) {
-      const socketUrl = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
+      const socketUrl = import.meta.env.VITE_API_URL || 'https://chatbackend-o1i2.onrender.com';
       socket = io(socketUrl.replace('/api', ''), {
         transports: ['websocket', 'polling'],
         reconnection: true,

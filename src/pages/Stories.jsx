@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Heart, Send, MoreHorizontal } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Heart, Send, MoreHorizontal, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Stories = () => {
@@ -187,6 +187,12 @@ const Stories = () => {
                     <button onClick={handleLike} className={currentStory.hasLiked ? 'liked' : ''}>
                         <Heart size={24} fill={currentStory.hasLiked ? "#ed4956" : "none"} color={currentStory.hasLiked ? "#ed4956" : "white"} />
                     </button>
+                    {currentGroup.user._id === currentUser.id && (
+                        <div className="story-views-count">
+                            <Eye size={20} color="white" />
+                            <span>{currentStory.viewsCount || 0}</span>
+                        </div>
+                    )}
                 </footer>
             </div>
 
@@ -215,6 +221,8 @@ const Stories = () => {
                 .reply-box { flex: 1; display: flex; align-items: center; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 25px; padding: 8px 15px; }
                 .reply-box input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 0.9rem; }
                 .story-footer button { background: transparent; border: none !important; color: white; }
+                .story-views-count { display: flex; align-items: center; gap: 4px; color: white; font-weight: 600; padding: 0 5px; cursor: default; }
+                .story-views-count span { font-size: 0.85rem; }
 
                 .stories-loader { height: 100vh; background: #000; color: white; display: flex; align-items: center; justify-content: center; }
             `}</style>

@@ -28,8 +28,8 @@ const MainLayout = ({ children }) => {
   const { token } = useAuth();
   const location = useLocation();
 
-  // Don't show nav sidebar on auth, stories, chat pages
-  const hideSidebar = !token || location.pathname.startsWith('/stories') || location.pathname.startsWith('/chat') || location.pathname === '/login';
+  // Show sidebar if token exists and not on stories page or login
+  const hideSidebar = !token || location.pathname.startsWith('/stories') || (location.pathname === '/login' && !token);
 
   if (hideSidebar) {
     return <>{children}</>;
@@ -37,7 +37,9 @@ const MainLayout = ({ children }) => {
 
   return (
     <div className="app-layout">
-      <Sidebar />
+      <div className="sidebar-container">
+        <Sidebar />
+      </div>
       <div className="main-content">
         {children}
       </div>

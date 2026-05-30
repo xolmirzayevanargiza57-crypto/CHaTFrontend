@@ -53,6 +53,13 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
     } finally { setUploadingAvatar(false); }
   };
 
+  const handleRemoveAvatar = () => {
+    if (window.confirm(lang === 'uz' ? "Profil rasmuni o'chirmoqchimisiz?" : "Remove profile photo?")) {
+      setForm(prev => ({ ...prev, avatar: '' }));
+      showMsg("Rasm o'chirildi", 'ok');
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!form.username.trim()) return showMsg("Username bo'sh bo'lishi mumkin emas", 'err');
     const usernameRegex = /^[a-zA-Z0-9._]+$/;
@@ -131,13 +138,20 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
                   )}
                   {uploadingAvatar && <div className="avatar-loading"><Loader className="spin" size={20} /></div>}
                 </div>
-                <button 
-                  className="ep-change-photo" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                >
-                  {t.editProfile}
-                </button>
+                <div className="ep-avatar-actions">
+                  <button 
+                    className="ep-change-photo" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                  >
+                    {t.changePhoto}
+                  </button>
+                  {form.avatar && (
+                    <button className="ep-remove-photo" onClick={handleRemoveAvatar}>
+                      {lang === 'uz' ? "O'chirish" : "Remove"}
+                    </button>
+                  )}
+                </div>
                 <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -227,7 +241,7 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
 
 /* ─────────────────────────── MAIN PROFILE ─────────────────────────── */
 const Profile = () => {
-  const { user, setUser, lang } = useAuth();
+  const { user, setUser, lang, token } = useAuth();
   const { userId } = useParams();
   const t = translations[lang];
   const navigate = useNavigate();
@@ -355,6 +369,17 @@ const Profile = () => {
     finally { setUploading(false); setUploadProgress(0); }
   };
 
+  const handleRemoveAvatar = async () => {
+    if (!window.confirm(lang === 'uz' ? "Profil rasmuni o'chirmoqchimisiz?" : "Remove profile photo?")) return;
+    setUploading(true);
+    try {
+      await axios.put('/api/users/me', { avatar: '' });
+      setUser({ ...user, avatar: '' });
+      setProfileData(prev => ({ ...prev, avatar: '' }));
+    } catch { alert("Xatolik!"); }
+    finally { setUploading(true); setUploading(false); }
+  };
+
   if (loading) return <div className="loading-screen"><Loader className="spin" size={32} /></div>;
   if (!profileData) return (
     <div className="error-screen">
@@ -400,6 +425,11 @@ const Profile = () => {
                 </div>
               )}
             </div>
+            {isOwnProfile && profileData.avatar && (
+                <button className="ip-avatar-remove" onClick={handleRemoveAvatar} title="Remove photo">
+                    <X size={12} strokeWidth={3} />
+                </button>
+            )}
             {isOwnProfile && (
               <button
                 className="ip-story-add"

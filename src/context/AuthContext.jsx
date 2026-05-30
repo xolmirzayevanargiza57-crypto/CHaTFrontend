@@ -11,6 +11,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Verify user exists in DB
+      axios.get('/api/users/me').catch(err => {
+        if (err.response?.status === 401 || err.response?.status === 404) {
+          logout();
+        }
+      });
     } else {
       delete axios.defaults.headers.common['Authorization'];
     }
@@ -21,7 +27,6 @@ export const AuthProvider = ({ children }) => {
       (error) => {
         if (error.response && error.response.status === 401) {
           logout();
-          window.location.href = '/';
         }
         return Promise.reject(error);
       }
@@ -45,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('friends_cache');
     delete axios.defaults.headers.common['Authorization'];
+    window.location.href = '/login';
   };
 
   const changeLang = (newLang) => {

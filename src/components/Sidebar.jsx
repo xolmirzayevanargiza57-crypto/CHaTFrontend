@@ -51,7 +51,10 @@ const Sidebar = ({
                             />
                         </div>
                         {friends
-                            .filter(f => f.username?.toLowerCase().includes(searchTerm.toLowerCase()))
+                            .filter(f => 
+                                f.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                f.firstName?.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
                             .map(friend => (
                             <div 
                                 key={friend._id} 
@@ -89,7 +92,7 @@ const Sidebar = ({
 
                         {/* Profile with avatar */}
                         <div
-                            className={`sb-item ${(location.pathname === '/profile' || location.pathname.startsWith('/profile/')) ? 'active' : ''}`}
+                            className={`sb-item ${(location.pathname === '/profile' || location.pathname === '/profile/') ? 'active' : ''}`}
                             onClick={() => navigate('/profile')}
                             title="Profile"
                         >
