@@ -13,6 +13,7 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchFriends = useCallback(async () => {
     try {
