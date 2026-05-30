@@ -1026,9 +1026,12 @@ const Profile = () => {
           background: var(--bg-primary);
           width: 100%;
           max-width: 440px;
+          max-height: 90vh;
           border-radius: 18px;
           overflow: hidden;
           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          display: flex;
+          flex-direction: column;
         }
         .ep-modal-header {
           display: flex;
@@ -1075,7 +1078,7 @@ const Profile = () => {
         .ep-msg.ok { background: rgba(0, 180, 90, 0.1); color: #00b45a; }
         .ep-msg.err { background: rgba(237, 73, 86, 0.1); color: #ed4956; }
 
-        .ep-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .ep-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex: 1; }
 
         .ep-field { display: flex; flex-direction: column; gap: 5px; }
         .ep-field label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
