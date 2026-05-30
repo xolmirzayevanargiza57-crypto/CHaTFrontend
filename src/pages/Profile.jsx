@@ -8,6 +8,8 @@ import {
   Heart, MessageCircle, Send
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getSocket } from '../utils/socket';
+
 import BottomNav from '../components/BottomNav';
 import ShareModal from '../components/ShareModal';
 
@@ -335,7 +337,16 @@ const Profile = () => {
     }
     fetchProfile();
     fetchUserPosts();
-  }, [userId, token]);
+
+    if (user) {
+      const socket = getSocket(user.id);
+      socket.on('postDeleted', (postId) => {
+        setPosts(prev => prev.filter(p => p._id !== postId));
+      });
+      return () => socket.off('postDeleted');
+    }
+  }, [userId, token, user?.id]);
+
 
   const fetchProfile = async () => {
     if (!user?.id && !userId) return; // Wait for initial auth

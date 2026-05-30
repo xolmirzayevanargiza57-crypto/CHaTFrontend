@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import ShareModal from '../components/ShareModal';
 import { translations } from '../i18n';
+import { getSocket } from '../utils/socket';
+
 
 const formatCount = (count) => {
     if (count < 10000) return count;
@@ -154,7 +156,18 @@ const Reels = () => {
     const containerRef = useRef(null);
     const isScrolling = useRef(false);
 
-    useEffect(() => { fetchReels(); }, []);
+    useEffect(() => { 
+        fetchReels(); 
+        
+        if (user) {
+            const socket = getSocket(user.id);
+            socket.on('postDeleted', (postId) => {
+                setReels(prev => prev.filter(p => p._id !== postId));
+            });
+            return () => socket.off('postDeleted');
+        }
+    }, [user.id]);
+
 
     const fetchReels = async () => {
         try {
@@ -213,9 +226,14 @@ const Reels = () => {
             await axios.delete(`/api/posts/${postId}`);
             setReels(reels.filter(p => p._id !== postId));
         } catch (err) { 
-            const msg = err.response?.data?.message || err.message;
-            alert("Xatolik: " + msg); 
+            if (err.response?.status === 404) {
+                setReels(reels.filter(p => p._id !== postId));
+            } else {
+                const msg = err.response?.data?.message || err.message;
+                alert("Xatolik: " + msg); 
+            }
         }
+
 
     };
 

@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import logoImg from '/chatlogo.png';
 import { translations } from '../i18n';
 import ShareModal from '../components/ShareModal';
+import { getSocket } from '../utils/socket';
+
 
 const formatCount = (count) => {
     if (count < 10000) return count;
@@ -164,7 +166,16 @@ const Home = () => {
     useEffect(() => {
         fetchFeed();
         fetchStories();
-    }, []);
+        
+        if (user) {
+            const socket = getSocket(user.id);
+            socket.on('postDeleted', (postId) => {
+                setPosts(prev => prev.filter(p => p._id !== postId));
+            });
+            return () => socket.off('postDeleted');
+        }
+    }, [user.id]);
+
 
     const fetchStories = async () => {
         try {
