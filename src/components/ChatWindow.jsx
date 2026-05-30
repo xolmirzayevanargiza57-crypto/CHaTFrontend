@@ -474,7 +474,15 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
       </div>
 
       <style jsx="true">{`
-        .chat-window { flex: 1; display: flex; flex-direction: column; background: var(--bg-primary); height: 100vh; position: relative; overflow: hidden; }
+        .chat-window { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: var(--bg-primary); 
+            height: 100vh; 
+            position: relative; 
+            overflow: hidden; 
+        }
         .chat-window.empty { 
           align-items: center; 
           justify-content: center; 
@@ -482,46 +490,65 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
         }
         .welcome-content { 
           text-align: center; 
-          background: rgba(135, 116, 225, 0.05); 
-          padding: 40px; 
+          background: rgba(var(--accent-rgb, 135, 116, 225), 0.05); 
+          padding: 60px; 
           border-radius: 40px;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(135, 116, 225, 0.1);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(var(--accent-rgb), 0.1);
           max-width: 80%;
+          animation: fadeInUp 0.8s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .welcome-logo { 
-          font-size: 4rem; 
-          font-weight: 900; 
+          font-size: 5rem; 
+          font-weight: 950; 
           color: var(--accent); 
-          margin-bottom: 15px; 
-          letter-spacing: -2px;
-          text-shadow: 0 10px 20px rgba(135, 116, 225, 0.2);
+          margin-bottom: 20px; 
+          letter-spacing: -3px;
+          text-shadow: 0 10px 30px rgba(var(--accent-rgb), 0.25);
         }
         .welcome-content p {
           color: var(--text-secondary);
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           font-weight: 500;
         }
 
         .chat-header { 
-          padding: 10px 20px; 
+          padding: 16px 24px; 
           display: flex; 
           align-items: center; 
-          gap: 15px; 
+          gap: 20px; 
           border-bottom: 1px solid var(--border); 
-          background: var(--bg-primary); 
-          z-index: 10; 
-          position: relative;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+          background: rgba(var(--bg-primary-rgb), 0.8);
+          backdrop-filter: blur(15px);
+          z-index: 100; 
+          position: sticky;
+          top: 0;
         }
-        .friend-profile { flex: 1; display: flex; align-items: center; gap: 14px; cursor: pointer; }
-        .avatar.small { width: 46px; height: 46px; border-radius: 16px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; position: relative; font-size: 1.2rem; }
-        .avatar.small img { width: 100%; height: 100%; border-radius: 16px; object-fit: cover; }
-        .online-dot { width: 13px; height: 13px; background: #34c759; border: 3px solid var(--bg-primary); border-radius: 50%; position: absolute; bottom: -2px; right: -2px; }
-        .friend-info-text h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
+        .friend-profile { flex: 1; display: flex; align-items: center; gap: 16px; cursor: pointer; }
+        .avatar.small { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 18px; 
+            background: var(--accent); 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 800; 
+            position: relative; 
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.15);
+        }
+        .avatar.small img { width: 100%; height: 100%; border-radius: 18px; object-fit: cover; }
+        .online-dot { width: 14px; height: 14px; background: #34c759; border: 3px solid var(--bg-primary); border-radius: 50%; position: absolute; bottom: -2px; right: -2px; }
+        .friend-info-text h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 3px; color: var(--text-primary); }
         .status { color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; }
         .status.online { color: #34c759; font-weight: 700; }
-        .status-container { height: 18px; display: flex; align-items: center; }
+        .status-container { height: 20px; display: flex; align-items: center; }
         .typing-status { color: var(--accent); font-size: 0.85rem; font-weight: 700; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
         

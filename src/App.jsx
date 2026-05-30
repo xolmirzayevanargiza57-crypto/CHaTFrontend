@@ -28,11 +28,11 @@ const MainLayout = ({ children }) => {
   const { token } = useAuth();
   const location = useLocation();
 
-  // Show sidebar if token exists and not on stories page or login
-  const hideSidebar = !token || location.pathname.startsWith('/stories') || (location.pathname === '/login' && !token);
+  // Always hide sidebar on login/auth page or if no token
+  const hideSidebar = !token || location.pathname === '/login' || location.pathname.startsWith('/stories');
 
   if (hideSidebar) {
-    return <>{children}</>;
+    return <div className="no-sidebar-layout">{children}</div>;
   }
 
   return (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Search, Compass, PlaySquare, Send, PlusSquare, MoreHorizontal } from 'lucide-react';
+import { Home, Search, Compass, PlaySquare, Send, PlusSquare, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoImg from '/chatlogo.png';
 
@@ -73,6 +73,18 @@ const Sidebar = ({
                                     <span className="friend-name">{friend.username}</span>
                                     {friend.unreadCount > 0 && <span className="unread-dot">{friend.unreadCount}</span>}
                                 </div>
+                                <button 
+                                    className="remove-friend-btn" 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm("Do'stlikdan o'chirasizmi?")) {
+                                            onRemoveFriend(friend._id);
+                                        }
+                                    }}
+                                    title="Remove Friend"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -117,40 +129,46 @@ const Sidebar = ({
             </div>
 
             <style jsx="true">{`
-                .sb-logo {
-                    padding: 16px 12px 24px;
-                    cursor: pointer;
+                .desktop-sidebar {
+                    width: 245px;
+                    height: 100vh;
+                    border-right: 1px solid var(--border);
                     display: flex;
-                    align-items: center;
+                    flex-direction: column;
+                    background: var(--bg-primary);
+                    padding: 8px 12px;
+                    transition: width 0.3s;
                 }
-                .sb-logo-img {
-                    height: 44px;
-                    width: auto;
-                    object-fit: contain;
-                    display: block;
+                .desktop-sidebar.friends-view {
+                    width: 350px;
                 }
+                
+                .sb-logo {
+                    padding: 25px 12px 35px;
+                    cursor: pointer;
+                }
+                .sb-logo-img { height: 28px; width: auto; object-fit: contain; }
                 .sb-logo-img-narrow { display: none; }
 
-                .sb-nav { flex: 1; display: flex; flex-direction: column; }
+                .sb-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 
                 .sb-item {
                     display: flex;
                     align-items: center;
                     gap: 16px;
                     padding: 12px;
-                    margin: 2px 0;
-                    border-radius: 10px;
+                    border-radius: 12px;
                     cursor: pointer;
-                    transition: background 0.15s;
+                    transition: all 0.2s;
                     color: var(--text-primary);
                 }
                 .sb-item:hover { background: var(--bg-secondary); }
-                .sb-item.active { font-weight: 700; }
-                .sb-label { font-size: 1rem; white-space: nowrap; }
+                .sb-item.active { font-weight: 800; background: rgba(0,0,0,0.02); }
+                .sb-label { font-size: 1rem; }
 
                 .sb-avatar {
-                    width: 26px;
-                    height: 26px;
+                    width: 28px;
+                    height: 28px;
                     border-radius: 50%;
                     overflow: hidden;
                     background: var(--bg-secondary);
@@ -158,95 +176,109 @@ const Sidebar = ({
                     align-items: center;
                     justify-content: center;
                     font-weight: 700;
-                    font-size: 0.8rem;
-                    border: 2px solid var(--border);
-                    flex-shrink: 0;
+                    border: 1px solid var(--border);
                 }
-                .sb-item.active .sb-avatar { border-color: var(--text-primary); }
+                .sb-item.active .sb-avatar { border: 2px solid var(--text-primary); }
                 .sb-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-                .sb-footer { padding-bottom: 8px; }
+                .sb-footer { margin-top: auto; padding-top: 10px; }
 
-                /* Narrow sidebar (medium screens) */
-                @media (max-width: 1263px) {
-                    .sb-label { display: none; }
-                    .sb-logo { padding: 16px 12px 24px; justify-content: center; }
-                    .sb-logo-img { display: none; }
-                    .sb-logo-img-narrow {
-                        display: block;
-                        height: 32px;
-                        width: 32px;
-                        object-fit: contain;
-                    }
-                    .sb-item { justify-content: center; gap: 0; }
+                /* Friends List Styling */
+                .sb-friends-list { 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 2px; 
+                    height: 100%;
                 }
-
-                @media (max-width: 768px) {
-                    .desktop-sidebar { 
-                        display: none !important;
-                    }
-                    .desktop-sidebar.friends-view {
-                        display: flex !important;
-                        width: 100vw !important;
-                        position: fixed;
-                        z-index: 1000;
-                    }
-                }
-
-                .sb-friends-list { display: flex; flex-direction: column; gap: 4px; padding: 0 8px; }
-                .sb-search-wrap { padding: 8px; margin-bottom: 8px; }
+                .sb-search-wrap { padding: 10px 0; margin-bottom: 10px; }
                 .sb-search-wrap input { 
                     width: 100%; 
-                    padding: 8px 12px; 
-                    border-radius: 20px; 
+                    padding: 10px 16px; 
+                    border-radius: 10px; 
                     background: var(--bg-secondary); 
-                    border: 1px solid var(--border);
+                    border: none;
                     color: var(--text-primary);
+                    font-size: 0.95rem;
                 }
                 .sb-friend-item { 
                     display: flex; 
                     align-items: center; 
                     gap: 12px; 
-                    padding: 10px; 
+                    padding: 12px; 
                     border-radius: 12px; 
                     cursor: pointer; 
+                    position: relative;
+                    transition: background 0.2s;
                 }
                 .sb-friend-item:hover { background: var(--bg-secondary); }
-                .sb-friend-item.active { background: var(--accent); color: white; }
+                .sb-friend-item.active { background: rgba(var(--accent-rgb, 135, 116, 225), 0.1); }
+                .sb-friend-item.active .friend-name { color: var(--accent); font-weight: 700; }
+                
                 .sb-friend-avatar { 
-                    width: 44px; 
-                    height: 44px; 
+                    width: 52px; 
+                    height: 52px; 
                     border-radius: 50%; 
-                    background: #eee; 
+                    background: var(--bg-secondary);
                     display: flex; 
                     align-items: center; 
                     justify-content: center; 
                     position: relative;
                     flex-shrink: 0;
                     overflow: hidden;
+                    border: 1px solid var(--border);
                 }
+                .active .sb-friend-avatar { border: 2px solid var(--accent); }
                 .sb-friend-avatar img { width: 100%; height: 100%; object-fit: cover; }
-                .sb-friend-avatar span { font-weight: 700; color: #666; }
-                .sb-friend-item.active .sb-friend-avatar span { color: var(--accent); }
+                .sb-friend-avatar span { font-weight: 800; color: var(--text-secondary); font-size: 1.2rem; }
+                
                 .online-indicator { 
                     position: absolute; 
                     bottom: 2px; 
                     right: 2px; 
-                    width: 10px; 
-                    height: 10px; 
+                    width: 14px; 
+                    height: 14px; 
                     background: #4caf50; 
-                    border: 2px solid var(--bg-primary); 
+                    border: 3px solid var(--bg-primary); 
                     border-radius: 50%; 
                 }
-                .sb-friend-info { flex: 1; display: flex; align-items: center; justify-content: space-between; }
-                .friend-name { font-weight: 600; font-size: 0.95rem; }
+                .sb-friend-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+                .friend-name { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
                 .unread-dot { 
-                    background: #ff4444; 
+                    background: var(--accent); 
                     color: white; 
-                    font-size: 0.75rem; 
-                    padding: 2px 6px; 
-                    border-radius: 10px; 
-                    font-weight: 700; 
+                    font-size: 0.7rem; 
+                    min-width: 18px;
+                    height: 18px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%; 
+                    font-weight: 800; 
+                }
+                
+                .remove-friend-btn {
+                    padding: 8px;
+                    border-radius: 50%;
+                    color: var(--text-secondary);
+                    opacity: 0;
+                    transition: all 0.2s;
+                }
+                .sb-friend-item:hover .remove-friend-btn { opacity: 1; }
+                .remove-friend-btn:hover { background: rgba(255,0,0,0.1); color: #ff4d4d; }
+
+                @media (max-width: 1263px) {
+                    .desktop-sidebar { width: 72px; }
+                    .desktop-sidebar.friends-view { width: 350px; }
+                    .sb-label { display: none; }
+                    .sb-logo { justify-content: center; }
+                    .sb-logo-img { display: none; }
+                    .sb-logo-img-narrow { display: block; height: 28px; }
+                    .sb-item { justify-content: center; padding: 12px 0; }
+                }
+
+                @media (max-width: 768px) {
+                    .desktop-sidebar { display: none !important; }
+                    .desktop-sidebar.friends-view { display: flex !important; width: 100% !important; border: none; }
                 }
             `}</style>
         </aside>
