@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
@@ -11,6 +12,7 @@ const Auth = () => {
   const [formData, setFormData] = useState({ username: '', firstName: '', lastName: '', password: '' });
   const [error, setError] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const navigate = useNavigate();
   const { login, lang } = useAuth();
   const t = translations[lang];
 
@@ -21,6 +23,7 @@ const Auth = () => {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const response = await axios.post(endpoint, formData);
       login(response.data);
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     }
