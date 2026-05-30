@@ -114,9 +114,18 @@ button {
   .main-content {
     margin-left: 0;
     padding-bottom: 60px;
+    width: 100vw;
   }
   .desktop-sidebar {
     display: none;
+  }
+  /* Fix video format on mobile */
+  video {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 80vh !important;
+    object-fit: contain !important;
+    background: #000;
   }
 }
 

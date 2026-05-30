@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 
 const SearchPage = () => {
     const navigate = useNavigate();
+    const { lang } = useAuth();
+    const t = translations[lang];
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -33,12 +35,12 @@ const SearchPage = () => {
         <div className="search-page">
             {/* Header */}
             <div className="search-header">
-                <h2 className="search-title">Search</h2>
+                <h2 className="search-title">{t.search.replace('...', '')}</h2>
                 <div className="search-input-wrapper">
                     <SearchIcon size={18} className="s-icon" />
                     <input
                         type="text"
-                        placeholder="Search users..."
+                        placeholder={t.search}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         autoFocus
@@ -81,12 +83,12 @@ const SearchPage = () => {
                 ) : query.trim().length > 0 && !loading ? (
                     <div className="search-state">
                         <SearchIcon size={48} opacity={0.3} />
-                        <p>No results for "<b>{query}</b>"</p>
+                        <p>{t.noResults} "<b>{query}</b>"</p>
                     </div>
                 ) : (
                     <div className="search-state">
                         <SearchIcon size={52} opacity={0.25} />
-                        <p>Search for people</p>
+                        <p>{t.searchResult}</p>
                     </div>
                 )}
             </main>

@@ -67,7 +67,10 @@ const ShareModal = ({ post, onClose }) => {
 
                 <div className="share-friends-grid">
                     {friends
-                        .filter(f => f.username?.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .filter(f => 
+                            f.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            f.firstName?.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
                         .map(friend => (
                         <div 
                             key={friend._id} 

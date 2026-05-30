@@ -14,8 +14,8 @@ const Settings = () => {
   return (
     <div className="tg-settings">
       <div className="tg-header">
-        <button className="tg-back" onClick={() => navigate(-1)}>
-          <ChevronLeft size={22} />
+        <button className="tg-back" onClick={() => navigate('/profile')}>
+          <ChevronLeft size={24} style={{ color: 'var(--text-primary)' }} />
         </button>
         <h1>{t.settings}</h1>
       </div>

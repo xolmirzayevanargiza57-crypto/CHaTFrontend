@@ -98,9 +98,6 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     <div className="reel-action" onClick={() => onShare(post)}>
                         <Send size={28} color="white" />
                     </div>
-                    <div className="reel-action">
-                        <Bookmark size={28} color="white" />
-                    </div>
                     <div className="reel-action" onClick={onToggleMute}>
                         {isMuted ? <VolumeX size={24} color="white" /> : <Volume2 size={24} color="white" />}
                     </div>

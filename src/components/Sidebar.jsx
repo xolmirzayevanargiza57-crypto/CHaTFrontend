@@ -31,7 +31,7 @@ const Sidebar = ({
     };
 
     return (
-        <aside className="desktop-sidebar">
+        <aside className={`desktop-sidebar ${friends ? 'friends-view' : ''}`}>
             {/* Logo - custom CHaT image */}
             <div className="sb-logo" onClick={() => navigate('/')}>
                 <img src={logoImg} alt="CHaT" className="sb-logo-img" />
@@ -180,11 +180,13 @@ const Sidebar = ({
 
                 @media (max-width: 768px) {
                     .desktop-sidebar { 
-                        display: ${friends ? 'flex' : 'none'} !important;
-                        width: ${friends ? '100vw' : '0'} !important;
-                        min-width: ${friends ? '100vw' : '0'} !important;
-                        border-right: none;
-                        display: ${friends && selectedFriend ? 'none' : 'flex'} !important; /* Hide sidebar if friend selected on mobile */
+                        display: none !important;
+                    }
+                    .desktop-sidebar.friends-view {
+                        display: flex !important;
+                        width: 100vw !important;
+                        position: fixed;
+                        z-index: 1000;
                     }
                 }
 

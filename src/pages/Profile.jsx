@@ -4,14 +4,16 @@ import { useAuth } from '../context/AuthContext';
 import { translations } from '../i18n';
 import {
   Grid, Video, Loader, X, Settings, Plus, Trash2,
-  Camera, Lock, Eye, EyeOff, CheckCircle, AlertCircle
+  Camera, Lock, Eye, EyeOff, CheckCircle, AlertCircle,
+  Heart, MessageCircle, Send
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 
 /* ─────────────────────────── EDIT MODAL ─────────────────────────── */
 const EditProfileModal = ({ profileData, onClose, onSaved }) => {
-  const { setUser, user } = useAuth();
+  const { setUser, user, lang } = useAuth();
+  const t = translations[lang];
   const [tab, setTab] = useState('profile'); // 'profile' | 'password'
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' }); // type: 'ok'|'err'
@@ -22,7 +24,10 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
     firstName: profileData.firstName || '',
     lastName: profileData.lastName || '',
     bio: profileData.bio || '',
+    avatar: profileData.avatar || '',
   });
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Password fields
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
@@ -31,6 +36,21 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
   const showMsg = (text, type = 'ok') => {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: '', type: '' }), 3000);
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const uploadRes = await axios.post('/api/upload', formData);
+      setForm(prev => ({ ...prev, avatar: uploadRes.data.fileUrl }));
+      showMsg("Rasm tanlandi ✓", 'ok');
+    } catch (err) {
+      showMsg("Yuklashda xato", 'err');
+    } finally { setUploadingAvatar(false); }
   };
 
   const handleSaveProfile = async () => {
@@ -71,7 +91,7 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
     <div className="ep-overlay" onClick={onClose}>
       <div className="ep-modal" onClick={e => e.stopPropagation()}>
         <div className="ep-modal-header">
-          <h3>Edit Profile</h3>
+          <h3>{t.editProfile}</h3>
           <button onClick={onClose}><X size={22} /></button>
         </div>
 
@@ -99,88 +119,107 @@ const EditProfileModal = ({ profileData, onClose, onSaved }) => {
           </div>
         )}
 
-        {/* Profile Tab */}
-        {tab === 'profile' && (
-          <div className="ep-body">
-            <div className="ep-field">
-              <label>Username</label>
-              <div className="ep-input-wrap">
-                <span className="ep-prefix">@</span>
-                <input
-                  type="text"
-                  value={form.username}
-                  onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s/g, '_') })}
-                  placeholder="username"
+        <div className="ep-body scrollable-y">
+          {tab === 'profile' ? (
+            <div className="ep-form">
+              <div className="ep-avatar-section">
+                <div className="ep-avatar-preview">
+                  {form.avatar ? (
+                    <img src={form.avatar} alt="v" />
+                  ) : (
+                    <div className="avatar-placeholder">{form.firstName?.[0] || form.username?.[0]}</div>
+                  )}
+                  {uploadingAvatar && <div className="avatar-loading"><Loader className="spin" size={20} /></div>}
+                </div>
+                <button 
+                  className="ep-change-photo" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  {t.editProfile}
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  hidden 
+                  accept="image/*" 
+                  onChange={handleAvatarChange} 
                 />
               </div>
-            </div>
-            <div className="ep-field">
-              <label>First Name</label>
-              <input
-                type="text"
-                value={form.firstName}
-                onChange={e => setForm({ ...form, firstName: e.target.value })}
-                placeholder="First name"
-              />
-            </div>
-            <div className="ep-field">
-              <label>Last Name</label>
-              <input
-                type="text"
-                value={form.lastName}
-                onChange={e => setForm({ ...form, lastName: e.target.value })}
-                placeholder="Last name"
-              />
-            </div>
-            <div className="ep-field">
-              <label>Bio</label>
-              <textarea
-                value={form.bio}
-                onChange={e => setForm({ ...form, bio: e.target.value })}
-                placeholder="Write something about yourself..."
-                rows={3}
-                maxLength={150}
-              />
-              <span className="ep-counter">{form.bio.length}/150</span>
-            </div>
-            <button className="ep-save-btn" onClick={handleSaveProfile} disabled={saving}>
-              {saving ? <Loader size={16} className="spin" /> : 'Save Changes'}
-            </button>
-          </div>
-        )}
 
-        {/* Password Tab */}
-        {tab === 'password' && (
-          <div className="ep-body">
-            {[
-              { key: 'current', label: 'Current Password', placeholder: 'Enter current password' },
-              { key: 'newPw', label: 'New Password', placeholder: 'At least 6 characters' },
-              { key: 'confirm', label: 'Confirm New Password', placeholder: 'Repeat new password' },
-            ].map(f => (
-              <div className="ep-field" key={f.key}>
-                <label>{f.label}</label>
+              <div className="ep-field">
+                <label>{t.firstName}</label>
+                <input
+                  type="text"
+                  value={form.firstName}
+                  onChange={e => setForm({ ...form, firstName: e.target.value })}
+                />
+              </div>
+              <div className="ep-field">
+                <label>{t.lastName}</label>
+                <input
+                  type="text"
+                  value={form.lastName}
+                  onChange={e => setForm({ ...form, lastName: e.target.value })}
+                />
+              </div>
+              <div className="ep-field">
+                <label>{t.username}</label>
                 <div className="ep-input-wrap">
+                  <span className="ep-prefix">@</span>
                   <input
-                    type={showPw[f.key] ? 'text' : 'password'}
-                    value={pwForm[f.key]}
-                    onChange={e => setPwForm({ ...pwForm, [f.key]: e.target.value })}
-                    placeholder={f.placeholder}
+                    type="text"
+                    value={form.username}
+                    onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s/g, '_') })}
                   />
-                  <button
-                    className="ep-eye"
-                    onClick={() => setShowPw({ ...showPw, [f.key]: !showPw[f.key] })}
-                    type="button"
-                  >
-                    {showPw[f.key] ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
                 </div>
               </div>
-            ))}
-            <button className="ep-save-btn" onClick={handleSavePassword} disabled={saving}>
-              {saving ? <Loader size={16} className="spin" /> : 'Update Password'}
-            </button>
-          </div>
-        )}
+              <div className="ep-field">
+                <label>{t.bio}</label>
+                <textarea
+                  value={form.bio}
+                  onChange={e => setForm({ ...form, bio: e.target.value })}
+                  placeholder="Tell us about yourself..."
+                  rows="3"
+                  maxLength="150"
+                />
+                <span className="ep-counter">{form.bio.length} / 150</span>
+              </div>
+              <button className="ep-save-btn" onClick={handleSaveProfile} disabled={saving}>
+                {saving ? <Loader className="spin" size={18} /> : t.save}
+              </button>
+            </div>
+          ) : (
+            <div className="ep-form">
+              {[
+                { key: 'current', label: 'Current Password' },
+                { key: 'newPw', label: 'New Password' },
+                { key: 'confirm', label: 'Confirm Password' },
+              ].map(f => (
+                <div className="ep-field" key={f.key}>
+                  <label>{f.label}</label>
+                  <div className="ep-input-wrap">
+                    <input
+                      type={showPw[f.key] ? 'text' : 'password'}
+                      value={pwForm[f.key]}
+                      onChange={e => setPwForm({ ...pwForm, [f.key]: e.target.value })}
+                    />
+                    <button
+                      className="ep-eye"
+                      onClick={() => setShowPw({ ...showPw, [f.key] : !showPw[f.key] })}
+                      type="button"
+                    >
+                      {showPw[f.key] ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button className="ep-save-btn" onClick={handleSavePassword} disabled={saving}>
+                {saving ? <Loader className="spin" size={18} /> : 'Change Password'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -213,14 +252,21 @@ const Profile = () => {
   }, [userId]);
 
   const fetchProfile = async () => {
+    if (!user?.id && !userId) return; // Wait for initial auth
     setLoading(true);
     try {
       const targetId = userId || user.id;
       const res = await axios.get(`/api/users/profile/${targetId}`);
       setProfileData(res.data);
-      setIsFollowing(res.data.followers?.includes(user.id));
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+      if (user?.id) {
+        setIsFollowing(res.data.followers?.includes(user.id));
+      }
+    } catch (err) { 
+      console.error(err);
+      if (err.response?.status === 404) {
+        setProfileData(null);
+      }
+    } finally { setLoading(false); }
   };
 
   const fetchUserPosts = async () => {
@@ -241,6 +287,29 @@ const Profile = () => {
           ? [...prev.followers, user.id]
           : prev.followers.filter(id => id !== user.id)
       }));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleLikePost = async (postId) => {
+    try {
+      const res = await axios.post(`/api/posts/${postId}/like`);
+      const updatedPost = { 
+        ...selectedPost, 
+        likes: res.data.hasLiked 
+          ? [...selectedPost.likes, user.id] 
+          : selectedPost.likes.filter(id => id !== user.id) 
+      };
+      setSelectedPost(updatedPost);
+      setPosts(posts.map(p => p._id === postId ? updatedPost : p));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleAddComment = async (postId, text) => {
+    try {
+      const res = await axios.post(`/api/posts/${postId}/comment`, { text });
+      const updatedPost = { ...selectedPost, comments: res.data };
+      setSelectedPost(updatedPost);
+      setPosts(posts.map(p => p._id === postId ? updatedPost : p));
     } catch (err) { console.error(err); }
   };
 
@@ -291,7 +360,15 @@ const Profile = () => {
   };
 
   if (loading) return <div className="loading-screen"><Loader className="spin" size={32} /></div>;
-  if (!profileData) return <div className="error-screen">User Not Found</div>;
+  if (!profileData) return (
+    <div className="error-screen">
+      <AlertCircle size={48} />
+      <p>{lang === 'uz' ? 'Foydalanuvchi topilmadi' : 'User not found'}</p>
+      <button className="ip-btn primary" onClick={() => navigate('/')} style={{ marginTop: 20, maxWidth: 200 }}>
+        {lang === 'uz' ? 'Bosh sahifaga qaytish' : 'Go back Home'}
+      </button>
+    </div>
+  );
 
   const displayedPosts = posts.filter(p => activeTab === 'reels' ? p.isReel || p.fileType === 'video' : !p.isReel);
 
@@ -371,7 +448,7 @@ const Profile = () => {
                 Edit profile
               </button>
               <button className="ip-btn secondary" onClick={() => navigate('/archive')}>
-                Archive
+                {t.viewArchive}
               </button>
             </>
           ) : (
@@ -425,7 +502,7 @@ const Profile = () => {
           {displayedPosts.length === 0 && (
             <div className="ip-empty">
               {activeTab === 'posts' ? <Grid size={40} opacity={0.3} /> : <Video size={40} opacity={0.3} />}
-              <p>No {activeTab} yet</p>
+              <p>{activeTab === 'posts' ? t.noPostsYet : (lang === 'uz' ? 'Hali reelslar yo\'q' : 'No reels yet')}</p>
             </div>
           )}
         </div>
@@ -446,31 +523,67 @@ const Profile = () => {
               }
             </div>
 
-            <div className="ip-preview-sidebar">
-              <div className="ip-preview-owner">
-                {profileData.avatar ? (
-                  <img src={profileData.avatar} alt="" />
-                ) : (
-                  <div className="ip-preview-avatar-placeholder">
-                    {profileData.firstName?.[0] || profileData.username?.[0]}
+              <div className="ip-preview-sidebar">
+                <div className="ip-preview-owner">
+                  {profileData.avatar ? (
+                    <img src={profileData.avatar} alt="" />
+                  ) : (
+                    <div className="ip-preview-avatar-placeholder">
+                      {profileData.firstName?.[0] || profileData.username?.[0]}
+                    </div>
+                  )}
+                  <b>{profileData.username}</b>
+                  {isOwnProfile && (
+                    <button
+                      className="ip-delete-btn"
+                      onClick={() => handleDeletePost(selectedPost._id)}
+                      title="Delete post"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                </div>
+                
+                <div className="ip-preview-content">
+                  <div className="ip-preview-caption">
+                    <p>{selectedPost.caption}</p>
+                    <span>{new Date(selectedPost.createdAt).toLocaleString()}</span>
                   </div>
-                )}
-                <b>{profileData.username}</b>
-                {isOwnProfile && (
-                  <button
-                    className="ip-delete-btn"
-                    onClick={() => handleDeletePost(selectedPost._id)}
-                    title="Delete post"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                )}
+
+                  <div className="ip-preview-comments">
+                    {selectedPost.comments?.map((c, i) => (
+                      <div key={i} className="ip-comment">
+                        <b>{c.user?.username}:</b> {c.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ip-preview-actions">
+                  <Heart
+                    size={24}
+                    fill={selectedPost.likes.includes(user.id) ? "#ed4956" : "none"}
+                    color={selectedPost.likes.includes(user.id) ? "#ed4956" : "var(--text-primary)"}
+                    onClick={() => handleLikePost(selectedPost._id)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <MessageCircle size={24} />
+                  <Send size={24} onClick={() => setShowShareModal(selectedPost)} />
+                </div>
+
+                <div className="ip-preview-comment-input">
+                  <input 
+                    type="text" 
+                    placeholder="Add a comment..." 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        handleAddComment(selectedPost._id, e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </div>
               </div>
-              <div className="ip-preview-caption">
-                <p>{selectedPost.caption}</p>
-                <span>{new Date(selectedPost.createdAt).toLocaleString()}</span>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -789,13 +902,46 @@ const Profile = () => {
           transition: background 0.15s;
         }
         .ip-delete-btn:hover { background: rgba(237,73,86,0.1); }
-        .ip-preview-caption {
-          padding: 16px;
+        .ip-preview-content {
           flex: 1;
+          display: flex;
+          flex-direction: column;
           overflow-y: auto;
         }
-        .ip-preview-caption p { font-size: 0.93rem; line-height: 1.5; margin-bottom: 8px; }
+        .ip-preview-caption {
+          padding: 16px 16px 8px;
+        }
+        .ip-preview-caption p { font-size: 0.93rem; line-height: 1.5; margin-bottom: 4px; }
         .ip-preview-caption span { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .ip-preview-comments {
+          padding: 0 16px 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .ip-comment { font-size: 0.88rem; line-height: 1.4; }
+        .ip-comment b { margin-right: 6px; }
+
+        .ip-preview-actions {
+          padding: 12px 16px;
+          border-top: 1px solid var(--border);
+          display: flex;
+          gap: 16px;
+          color: var(--text-primary);
+        }
+        .ip-preview-comment-input {
+          padding: 12px 16px;
+          border-top: 1px solid var(--border);
+        }
+        .ip-preview-comment-input input {
+          width: 100%;
+          border: none !important;
+          background: transparent;
+          color: var(--text-primary);
+          font-size: 0.9rem;
+          outline: none;
+        }
 
         /* Edit Modal */
         .ep-overlay {
