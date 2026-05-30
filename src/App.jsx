@@ -55,7 +55,7 @@ const AppContent = () => {
       <MainLayout>
         <Routes>
           <Route path="/" element={token ? <Home /> : <Navigate to="/login" />} />
-          <Route path="/login" element={token ? <Navigate to="/" /> : <Auth />} />
+          <Route path="/login" element={<Auth />} />
           <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
