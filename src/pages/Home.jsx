@@ -218,9 +218,15 @@ const Home = () => {
             await axios.delete(`/api/posts/${postId}`);
             setPosts(posts.filter(p => p._id !== postId));
         } catch (err) { 
-            const msg = err.response?.data?.message || err.message;
-            alert("Xatolik: " + msg); 
+            if (err.response?.status === 404) {
+                // Post already deleted, just remove from state
+                setPosts(posts.filter(p => p._id !== postId));
+            } else {
+                const msg = err.response?.data?.message || err.message;
+                alert("Xatolik: " + msg); 
+            }
         }
+
 
     };
 

@@ -16,6 +16,8 @@ const Stories = () => {
     const [progress, setProgress] = useState(0);
     const [replyText, setReplyText] = useState('');
     const [sendingReply, setSendingReply] = useState(false);
+    const [videoDuration, setVideoDuration] = useState(5000);
+
 
     useEffect(() => {
         fetchStories();
@@ -42,25 +44,28 @@ const Stories = () => {
             axios.post(`/api/stories/${currentStory._id}/view`).catch(e => {});
         }
 
-        let duration = 5000;
-        if (currentStory.fileType === 'video') {
-            duration = 20000; // Give videos more time (20s)
-        }
+        const isVideo = currentStory.fileType === 'video';
+        let duration = isVideo ? videoDuration : 5000;
+
+
 
         const interval = 100;
         let elapsed = 0;
 
         const timer = setInterval(() => {
             elapsed += interval;
-            setProgress((elapsed / duration) * 100);
+            const newProgress = (elapsed / duration) * 100;
+            setProgress(newProgress > 100 ? 100 : newProgress);
+            
             if (elapsed >= duration) {
                 clearInterval(timer);
-                nextStory();
+                if (!isVideo) nextStory();
             }
         }, interval);
 
         return () => clearInterval(timer);
     }, [groupIndex, storyIndex, currentStory]);
+
 
     const nextStory = () => {
         if (storyIndex < currentGroup.stories.length - 1) {
@@ -165,7 +170,9 @@ const Stories = () => {
                             playsInline 
                             muted={muted}
                             onEnded={nextStory}
+                            onLoadedMetadata={(e) => setVideoDuration(e.target.duration * 1000)}
                         />
+
                     ) : (
                         <img src={currentStory.fileUrl} alt="story" />
                     )}
