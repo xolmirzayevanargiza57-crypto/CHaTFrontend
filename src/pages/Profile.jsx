@@ -247,9 +247,13 @@ const Profile = () => {
   const isOwnProfile = !userId || userId === user?.id;
 
   useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
     fetchProfile();
     fetchUserPosts();
-  }, [userId]);
+  }, [userId, token]);
 
   const fetchProfile = async () => {
     if (!user?.id && !userId) return; // Wait for initial auth
@@ -304,14 +308,6 @@ const Profile = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleAddComment = async (postId, text) => {
-    try {
-      const res = await axios.post(`/api/posts/${postId}/comment`, { text });
-      const updatedPost = { ...selectedPost, comments: res.data };
-      setSelectedPost(updatedPost);
-      setPosts(posts.map(p => p._id === postId ? updatedPost : p));
-    } catch (err) { console.error(err); }
-  };
 
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Postni o'chirishni istaysizmi?")) return;
@@ -516,7 +512,7 @@ const Profile = () => {
               <X size={26} />
             </button>
 
-            <div className="ip-preview-media">
+            <div className="ip-preview-media" onDoubleClick={() => handleLikePost(selectedPost._id)}>
               {selectedPost.fileType === 'video'
                 ? <video src={selectedPost.fileUrl} controls autoPlay loop />
                 : <img src={selectedPost.fileUrl} alt="" />
@@ -549,16 +545,8 @@ const Profile = () => {
                     <p>{selectedPost.caption}</p>
                     <span>{new Date(selectedPost.createdAt).toLocaleString()}</span>
                   </div>
-
-                  <div className="ip-preview-comments">
-                    {selectedPost.comments?.map((c, i) => (
-                      <div key={i} className="ip-comment">
-                        <b>{c.user?.username}:</b> {c.text}
-                      </div>
-                    ))}
-                  </div>
                 </div>
-
+ 
                 <div className="ip-preview-actions">
                   <Heart
                     size={24}
@@ -567,23 +555,9 @@ const Profile = () => {
                     onClick={() => handleLikePost(selectedPost._id)}
                     style={{ cursor: 'pointer' }}
                   />
-                  <MessageCircle size={24} />
-                  <Send size={24} onClick={() => setShowShareModal(selectedPost)} />
+                  <Send size={24} onClick={() => { setShowShareModal(selectedPost); setSelectedPost(null); }} />
                 </div>
-
-                <div className="ip-preview-comment-input">
-                  <input 
-                    type="text" 
-                    placeholder="Add a comment..." 
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && e.target.value.trim()) {
-                        handleAddComment(selectedPost._id, e.target.value);
-                        e.target.value = '';
-                      }
-                    }}
-                  />
-                </div>
-              </div>
+            </div>
           </div>
         </div>
       )}

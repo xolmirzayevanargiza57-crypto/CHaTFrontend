@@ -16,6 +16,7 @@ const formatCount = (count) => {
 const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare }) => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+    const [showHeart, setShowHeart] = useState(false);
     const videoRef = useRef(null);
     const navigate = useNavigate();
 
@@ -59,11 +60,10 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
         }
     }, [isMuted]);
 
-    const handleFollow = async () => {
-        try {
-            const res = await axios.post(`/api/users/${post.user._id}/follow`);
-            setIsFollowing(res.data.isFollowing);
-        } catch (err) { console.error(err); }
+    const handleDoubleTap = () => {
+        if (!post.likes.includes(user.id)) onLike(post._id);
+        setShowHeart(true);
+        setTimeout(() => setShowHeart(false), 800);
     };
 
     const isOwn = post.user._id === user.id;
@@ -78,7 +78,13 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                 playsInline
                 preload="auto"
                 onClick={onToggleMute}
+                onDoubleClick={handleDoubleTap}
             />
+            {showHeart && (
+                <div className="reel-heart-overlay">
+                    <Heart size={80} fill="white" color="white" />
+                </div>
+            )}
 
             <div className="reel-overlay">
                 {/* Right actions */}
@@ -90,10 +96,6 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                             color={post.likes.includes(user.id) ? "#ed4956" : "white"}
                         />
                         <span>{formatCount(post.likes.length)}</span>
-                    </div>
-                    <div className="reel-action">
-                        <MessageCircle size={28} color="white" />
-                        <span>0</span>
                     </div>
                     <div className="reel-action" onClick={() => onShare(post)}>
                         <Send size={28} color="white" />
@@ -353,7 +355,25 @@ const Reels = () => {
                     opacity: 0.85;
                 }
 
-                @media (max-width: 768px) {
+        
+        .reel-heart-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            animation: heartPop 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes heartPop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+            30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
                     .reel-slide { max-width: 100%; height: calc(100vh - 60px); }
                     .reel-slide video { object-fit: contain; background: #000; }
                 }

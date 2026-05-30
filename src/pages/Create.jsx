@@ -61,6 +61,16 @@ const Create = () => {
             </header>
 
             <main className="create-content">
+                <div className="caption-area">
+                    <textarea 
+                        placeholder={t.writeCaption}
+                        value={caption} 
+                        onChange={(e) => setCaption(e.target.value)}
+                        rows="4"
+                        style={{ fontSize: '1.2rem', fontWeight: '500' }}
+                    />
+                </div>
+
                 <div className={`media-preview-box ${isReel ? 'is-video' : ''}`} onClick={() => !file && fileInputRef.current.click()}>
                     {preview ? (
                         <div className="preview-container">
@@ -77,15 +87,6 @@ const Create = () => {
                 </div>
 
                 <input type="file" ref={fileInputRef} hidden onChange={handleFileSelect} accept="image/*,video/*" />
-
-                <div className="caption-area">
-                    <textarea 
-                        placeholder={t.writeCaption}
-                        value={caption} 
-                        onChange={(e) => setCaption(e.target.value)}
-                        rows="5"
-                    />
-                </div>
 
                 {file && file.type.startsWith('video/') && (
                     <div className="toggle-section">
@@ -107,28 +108,55 @@ const Create = () => {
             <BottomNav />
 
             <style jsx="true">{`
-                .create-page { background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; }
-                .create-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--border); }
+                .create-page { background: var(--bg-primary); min-height: 100vh; padding-bottom: 80px; display: flex; flex-direction: column; }
+                .create-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-primary); z-index: 100; }
                 .create-header h2 { font-size: 1.1rem; font-weight: 800; margin: 0; }
-                .create-header button { background: transparent; border: none !important; color: var(--text-primary); }
-                .share-btn { color: var(--accent) !important; font-weight: 800; font-size: 1rem; }
+                .create-header button { background: transparent; border: none !important; color: var(--text-primary); padding: 4px; }
+                .share-btn { 
+                    background: var(--accent) !important; 
+                    color: white !important; 
+                    padding: 8px 20px !important; 
+                    border-radius: 8px;
+                    font-weight: 700; 
+                    font-size: 0.95rem; 
+                }
                 .share-btn:disabled { opacity: 0.5; }
 
-                .create-content { padding: 0; }
-                .media-preview-box { width: 100%; aspect-ratio: 1; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
-                .media-preview-box.is-video { aspect-ratio: 9/16; max-height: 70vh; }
+                .create-content { flex: 1; display: flex; flex-direction: column; }
+                .caption-area { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+                .caption-area textarea { 
+                    width: 100%; 
+                    background: transparent; 
+                    border: none !important; 
+                    color: var(--text-primary); 
+                    font-size: 1.15rem; 
+                    outline: none; 
+                    resize: none; 
+                    font-family: inherit; 
+                    font-weight: 500;
+                }
+
+                .media-preview-box { 
+                    width: 100%; 
+                    background: var(--bg-secondary); 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    overflow: hidden; 
+                    cursor: pointer; 
+                }
+                .media-preview-box:not(.is-video) { aspect-ratio: 1; }
+                .media-preview-box.is-video { aspect-ratio: 9/16; max-height: 60vh; }
+                
                 .preview-container { width: 100%; height: 100%; position: relative; background: #000; }
                 .v-contain { width: 100%; height: 100%; object-fit: contain !important; }
                 .preview-container img { width: 100%; height: 100%; object-fit: cover; }
                 .remove-media { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; padding: 8px; }
                 
-                .select-placeholder { text-align: center; color: var(--text-secondary); }
-                .select-btn { margin-top: 15px; background: var(--accent); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; }
+                .select-placeholder { text-align: center; color: var(--text-secondary); padding: 40px 20px; }
+                .select-btn { margin-top: 15px; background: var(--bg-primary); border: 1px solid var(--border) !important; color: var(--text-primary); padding: 10px 20px; border-radius: 8px; font-weight: 700; }
 
-                .caption-area { padding: 15px; border-bottom: 1px solid var(--border); }
-                .caption-area textarea { width: 100%; background: transparent; border: none; color: var(--text-primary); font-size: 1rem; outline: none; resize: none; font-family: inherit; }
-
-                .toggle-section { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+                .toggle-section { padding: 15px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
                 .toggle-section span { font-weight: 600; }
 
                 .upload-progress-container { padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; }

@@ -20,6 +20,7 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, o
     const [liked, setLiked] = useState(post.likes.includes(user.id));
     const [likeCount, setLikeCount] = useState(post.likes.length);
     const navigate = useNavigate();
+    const [showHeart, setShowHeart] = useState(false);
     const videoRef = useRef(null);
 
     useEffect(() => {
@@ -48,6 +49,12 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, o
         setLiked(newLiked);
         setLikeCount(c => newLiked ? c + 1 : c - 1);
         onLike(post._id);
+    };
+
+    const handleDoubleTap = () => {
+        if (!liked) handleLike();
+        setShowHeart(true);
+        setTimeout(() => setShowHeart(false), 800);
     };
 
     const isOwn = post.user._id === user.id;
@@ -83,7 +90,7 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, o
             </div>
 
             {/* Media */}
-            <div className="ig-post-media" onDoubleClick={handleLike}>
+            <div className="ig-post-media" onDoubleClick={handleDoubleTap}>
                 {post.fileType === 'video' ? (
                     <>
                         <video
@@ -101,6 +108,11 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, o
                 ) : (
                     <img src={post.fileUrl} alt="post" loading="lazy" />
                 )}
+                {showHeart && (
+                    <div className="heart-overlay">
+                        <Heart size={80} fill="white" color="white" />
+                    </div>
+                )}
             </div>
 
             {/* Actions */}
@@ -114,10 +126,8 @@ const PostCard = ({ post, user, onLike, onDelete, isMuted, onToggleMute, lang, o
                             style={liked ? { animation: 'heartBeat 0.4s ease' } : {}}
                         />
                     </button>
-                    <button><MessageCircle size={24} /></button>
                     <button onClick={() => onShare(post)}><Send size={24} /></button>
                 </div>
-                <button><Bookmark size={24} /></button>
             </div>
 
             {/* Info */}
@@ -487,6 +497,22 @@ const Home = () => {
                 .ig-actions-left { display: flex; gap: 14px; }
                 .ig-post-actions button { color: var(--text-primary); padding: 4px; }
                 .ig-post-actions button.liked { color: #ed4956; }
+                .heart-overlay {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 10;
+                    animation: heartPop 0.8s ease-out forwards;
+                    pointer-events: none;
+                }
+                @keyframes heartPop {
+                    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                    15% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+                    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+                }
 
                 .ig-post-info { padding: 0 12px 14px; }
                 .ig-likes { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 4px; }
