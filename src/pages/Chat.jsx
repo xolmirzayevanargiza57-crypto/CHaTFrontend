@@ -134,7 +134,10 @@ const Chat = () => {
   const handleSendMessage = async (payload) => {
     try {
       const response = await axios.post(`/api/messages/${selectedFriend._id}`, payload);
-      setMessages(prev => [...prev, response.data]);
+      setMessages(prev => {
+        if (prev.some(m => m._id === response.data._id)) return prev;
+        return [...prev, response.data];
+      });
       setFriends(prev => prev.map(f => f._id === selectedFriend._id ? { ...f, lastMessageAt: response.data.createdAt } : f)
           .sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
     } catch (err) {

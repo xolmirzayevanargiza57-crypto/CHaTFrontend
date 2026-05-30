@@ -367,7 +367,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
             ) : (
               <div className="file-box"><Music size={24} /> {preview.name}</div>
             )}
-            {(preview.type === 'image' || preview.type === 'video') && (
+            {(preview.type === 'image' || preview.type === 'video') ? (
               <div className="caption-row">
                 <input 
                   type="text" 
@@ -376,6 +376,12 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
                   value={captionText}
                   onChange={(e) => setCaptionText(e.target.value)}
                 />
+                <button className="preview-send-btn" onClick={() => uploadAndSend()} disabled={uploading}>
+                  {uploading ? <div className="tg-spinner xsmall"></div> : <Send size={20} />}
+                </button>
+              </div>
+            ) : (
+              <div className="caption-row" style={{justifyContent: 'flex-end'}}>
                 <button className="preview-send-btn" onClick={() => uploadAndSend()} disabled={uploading}>
                   {uploading ? <div className="tg-spinner xsmall"></div> : <Send size={20} />}
                 </button>
@@ -465,7 +471,7 @@ const ChatWindow = ({ friend, messages, onSendMessage, onClearForBoth, onClearFo
                 <Send size={20} />
               </button>
             ) : (
-              <button type="button" className="mic-btn" onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording}>
+              <button type="button" className="mic-btn" onClick={startRecording}>
                 <Mic size={22} />
               </button>
             )}
