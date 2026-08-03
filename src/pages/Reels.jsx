@@ -8,7 +8,7 @@ import { translations } from '../i18n';
 import { getSocket } from '../utils/socket';
 import { formatCount } from '../utils/formatters';
 
-
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare, savedPostIds, onSaveChange }) => {
     const [isFollowing, setIsFollowing] = useState(false);
@@ -20,8 +20,10 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
     const [showComments, setShowComments] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [commentLoading, setCommentLoading] = useState(false);
-    const [isSaved, setIsSaved] = useState(savedPostIds.includes(post._id));
+    const [isSaved, setIsSaved] = useState(savedPostIds?.includes(post._id) || false);
     const [hasCountedView, setHasCountedView] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
     const watchTimer = useRef(null);
     const videoRef = useRef(null);
     const navigate = useNavigate();
@@ -33,18 +35,17 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
     }, [user, post.user]);
 
     useEffect(() => {
-        setIsSaved(savedPostIds.includes(post._id));
+        setIsSaved(savedPostIds?.includes(post._id) || false);
     }, [savedPostIds, post._id]);
 
     useEffect(() => {
         if (!videoRef.current) return;
-
         const video = videoRef.current;
 
         const handleCountView = () => {
             if (hasCountedView) return;
             watchTimer.current = setTimeout(() => {
-                axios.post(`/api/posts/${post._id}/view`).catch(err => {
+                axios.post(`${API_URL}/posts/${post._id}/view`).catch(err => {
                     console.error('Failed to track view:', err);
                 });
                 setHasCountedView(true);
@@ -73,12 +74,32 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
         };
     }, [post._id, hasCountedView]);
 
-    // Sync muted state
     useEffect(() => {
         if (videoRef.current) {
             videoRef.current.muted = isMuted;
         }
     }, [isMuted]);
+
+    const handleVideoLoad = () => {
+        setIsLoading(false);
+    };
+
+    const handleVideoError = (e) => {
+        console.error('Video error:', e);
+        if (retryCount < 3) {
+            setRetryCount(prev => prev + 1);
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.src = post.fileUrl + '?retry=' + Date.now();
+                    videoRef.current.load();
+                    videoRef.current.play().catch(() => {});
+                }
+            }, 1000);
+        } else {
+            setVideoError(true);
+            setIsLoading(false);
+        }
+    };
 
     const handleDoubleTap = () => {
         if (!post.likes.includes(user.id)) onLike(post._id);
@@ -86,15 +107,10 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
         setTimeout(() => setShowHeart(false), 800);
     };
 
-    const handleVideoError = (e) => {
-        console.error('Video error:', e);
-        setVideoError(true);
-    };
-
     const handleSaveToggle = async () => {
         setIsSaving(true);
         try {
-            const res = await axios.post(`/api/users/save/${post._id}`);
+            const res = await axios.post(`${API_URL}/users/save/${post._id}`);
             setIsSaved(res.data.isSaved);
             if (onSaveChange) onSaveChange(post._id, res.data.isSaved);
         } catch (err) {
@@ -109,7 +125,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
         if (!trimmed) return;
         setCommentLoading(true);
         try {
-            const res = await axios.post(`/api/posts/${post._id}/comment`, { text: trimmed });
+            const res = await axios.post(`${API_URL}/posts/${post._id}/comment`, { text: trimmed });
             setComments(res.data);
             setCommentText('');
             setShowComments(true);
@@ -120,38 +136,55 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
         }
     };
 
-    const isOwn = post.user._id.toString() === user.id;
+    const isOwn = post.user?._id?.toString() === user?.id;
 
     return (
         <div className="reel-slide">
             {videoError ? (
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    background: '#000',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#999',
-                    flexDirection: 'column',
-                    gap: '12px'
-                }}>
+                <div className="reel-error-container">
                     <Eye size={48} />
-                    <p style={{ margin: 0, fontSize: '14px' }}>Video failed to load</p>
+                    <p className="reel-error-text">Video failed to load</p>
+                    <button 
+                        className="reel-retry-btn"
+                        onClick={() => {
+                            setVideoError(false);
+                            setRetryCount(0);
+                            setIsLoading(true);
+                            if (videoRef.current) {
+                                videoRef.current.src = post.fileUrl + '?t=' + Date.now();
+                                videoRef.current.load();
+                            }
+                        }}
+                    >
+                        Qayta yuklash
+                    </button>
                 </div>
             ) : (
-                <video
-                    ref={videoRef}
-                    src={post.fileUrl}
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    preload="metadata"
-                    onClick={onToggleMute}
-                    onDoubleClick={handleDoubleTap}
-                    onError={handleVideoError}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                <>
+                    {isLoading && (
+                        <div className="reel-video-loader">
+                            <Loader className="spin" size={48} color="white" />
+                        </div>
+                    )}
+                    <video
+                        ref={videoRef}
+                        src={post.fileUrl}
+                        loop
+                        muted={isMuted}
+                        playsInline
+                        preload="auto"
+                        onClick={onToggleMute}
+                        onDoubleClick={handleDoubleTap}
+                        onError={handleVideoError}
+                        onLoadedData={handleVideoLoad}
+                        style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover',
+                            display: isLoading ? 'none' : 'block'
+                        }}
+                    />
+                </>
             )}
             {showHeart && (
                 <div className="reel-heart-overlay">
@@ -160,15 +193,14 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
             )}
 
             <div className="reel-overlay">
-                {/* Right actions */}
                 <div className="reel-sidebar-actions">
                     <div className="reel-action" onClick={() => onLike(post._id)}>
                         <Heart
                             size={28}
-                            fill={post.likes.includes(user.id) ? "#ed4956" : "none"}
-                            color={post.likes.includes(user.id) ? "#ed4956" : "white"}
+                            fill={post.likes?.includes(user.id) ? "#ed4956" : "none"}
+                            color={post.likes?.includes(user.id) ? "#ed4956" : "white"}
                         />
-                        <span>{formatCount(post.likes.length)}</span>
+                        <span>{formatCount(post.likes?.length || 0)}</span>
                     </div>
                     <div className="reel-action" onClick={() => setShowComments(prev => !prev)}>
                         <MessageCircle size={28} color="white" />
@@ -179,7 +211,6 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     </div>
                     <div className="reel-action" onClick={handleSaveToggle}>
                         <Bookmark size={28} color={isSaved ? "#ffd700" : "white"} fill={isSaved ? "#ffd700" : "none"} />
-                        <span>{isSaved ? 'Saved' : 'Save'}</span>
                     </div>
                     <div className="reel-action" onClick={onToggleMute}>
                         {isMuted ? <VolumeX size={24} color="white" /> : <Volume2 size={24} color="white" />}
@@ -202,25 +233,24 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     )}
                 </div>
 
-                {/* Bottom info */}
                 <div className="reel-bottom-info">
-                    <div className="reel-user" onClick={() => navigate(`/profile/${post.user._id}`)}>
+                    <div className="reel-user" onClick={() => navigate(`/profile/${post.user?._id}`)}>
                         <img
-                            src={post.user.avatar && post.user.avatar.startsWith('http') ? post.user.avatar : `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user.username}`}
+                            src={post.user?.avatar && post.user.avatar.startsWith('http') ? post.user.avatar : `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user?.username || 'user'}`}
                             alt=""
                             onError={(e) => {
                                 e.currentTarget.onerror = null;
-                                e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user.username}`;
+                                e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user?.username || 'user'}`;
                             }}
                         />
-                        <span className="reel-username">@{post.user.username}</span>
-                        {!isOwn && (
+                        <span className="reel-username">@{post.user?.username || 'user'}</span>
+                        {!isOwn && post.user && (
                             <button
                                 className={`reel-follow ${isFollowing ? 'following' : ''}`}
                                 onClick={async (e) => { 
                                     e.stopPropagation(); 
                                     try {
-                                        const res = await axios.post(`/api/users/${post.user._id}/follow`);
+                                        const res = await axios.post(`${API_URL}/users/${post.user._id}/follow`);
                                         setIsFollowing(res.data.isFollowing);
                                     } catch (err) { console.error(err); }
                                 }}
@@ -232,7 +262,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     <p className="reel-caption">{post.caption}</p>
                     <div className="reel-audio">
                         <Music size={12} />
-                        <span>{post.user.username} · Original Audio</span>
+                        <span>{post.user?.username || 'User'} · Original Audio</span>
                     </div>
 
                     {showComments && (
@@ -259,6 +289,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                                     value={commentText}
                                     onChange={(e) => setCommentText(e.target.value)}
                                     placeholder="Add a comment..."
+                                    onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()}
                                 />
                                 <button onClick={handleCommentSubmit} disabled={commentLoading || !commentText.trim()}>
                                     {commentLoading ? '...' : 'Send'}
@@ -295,28 +326,72 @@ const Reels = () => {
         }
     }, [user?.id]);
 
-
     const fetchReels = async () => {
         try {
             setError(null);
             setLoading(true);
-            const res = await axios.get('/api/posts/reels', { timeout: 10000 });
+            const res = await axios.get(`${API_URL}/posts/reels`, { timeout: 30000 });
             setReels(res.data || []);
         } catch (err) {
             console.error('Reels fetch error:', err);
-            setError(err.response?.data?.message || 'Failed to load reels');
+            if (err.code === 'ECONNABORTED') {
+                setError('Server javob bermayapti. Internet ulanishini tekshiring.');
+            } else {
+                setError(err.response?.data?.message || 'Failed to load reels');
+            }
             setReels([]);
         } finally { 
             setLoading(false); 
         }
     };
 
+    const fetchSavedIds = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/users/saved-posts`);
+            setSavedPostIds(res.data.map(post => post._id));
+        } catch (err) {
+            console.error('Failed to fetch saved reels:', err);
+        }
+    };
+
+    const handleSaveChange = (postId, isSaved) => {
+        setSavedPostIds(prev => {
+            if (isSaved) {
+                return [...new Set([...prev, postId])];
+            }
+            return prev.filter(id => id !== postId);
+        });
+    };
+
+    const handleLike = async (postId) => {
+        try {
+            const res = await axios.post(`${API_URL}/posts/${postId}/like`);
+            setReels(reels.map(p => p._id === postId
+                ? { ...p, likes: res.data.hasLiked ? [...p.likes, user.id] : p.likes.filter(id => id !== user.id) }
+                : p
+            ));
+        } catch (err) { console.error(err); }
+    };
+
+    const handleDelete = async (postId) => {
+        if (!window.confirm("Reelni o'chirishni istaysizmi?")) return;
+        try {
+            await axios.delete(`${API_URL}/posts/${postId}`);
+            setReels(reels.filter(p => p._id !== postId));
+        } catch (err) { 
+            if (err.response?.status === 404) {
+                setReels(reels.filter(p => p._id !== postId));
+            } else {
+                const msg = err.response?.data?.message || err.message;
+                alert("Xatolik: " + msg); 
+            }
+        }
+    };
+
     const handleWheel = (e) => {
         if (isScrolling.current) return;
-        
         const container = containerRef.current;
         if (!container) return;
-
         if (Math.abs(e.deltaY) < 30) return;
 
         e.preventDefault();
@@ -343,62 +418,17 @@ const Reels = () => {
         }, 800);
     };
 
-    const fetchSavedIds = async () => {
-        try {
-            const res = await axios.get('/api/users/saved-posts');
-            setSavedPostIds(res.data.map(post => post._id));
-        } catch (err) {
-            console.error('Failed to fetch saved reels:', err);
-        }
-    };
-
-    const handleSaveChange = (postId, isSaved) => {
-        setSavedPostIds(prev => {
-            if (isSaved) {
-                return [...new Set([...prev, postId])];
-            }
-            return prev.filter(id => id !== postId);
-        });
-    };
-
-    const handleLike = async (postId) => {
-        try {
-            const res = await axios.post(`/api/posts/${postId}/like`);
-            setReels(reels.map(p => p._id === postId
-                ? { ...p, likes: res.data.hasLiked ? [...p.likes, user.id] : p.likes.filter(id => id !== user.id) }
-                : p
-            ));
-        } catch (err) { console.error(err); }
-    };
-
-    const handleDelete = async (postId) => {
-        if (!window.confirm("Reelni o'chirishni istaysizmi?")) return;
-        try {
-            await axios.delete(`/api/posts/${postId}`);
-            setReels(reels.filter(p => p._id !== postId));
-        } catch (err) { 
-            if (err.response?.status === 404) {
-                setReels(reels.filter(p => p._id !== postId));
-            } else {
-                const msg = err.response?.data?.message || err.message;
-                alert("Xatolik: " + msg); 
-            }
-        }
-
-
-    };
-
     if (loading) return (
-        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: 'white' }}>
-            <Loader className="spin" size={48} />
+        <div className="reels-loading">
+            <Loader className="spin" size={48} color="white" />
         </div>
     );
 
     if (error) return (
-        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: 'white', flexDirection: 'column', gap: '12px' }}>
+        <div className="reels-error">
             <Music size={48} opacity={0.5} />
             <p>{error}</p>
-            <button onClick={fetchReels} style={{ marginTop: '12px', padding: '8px 16px', background: '#0a66c2', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+            <button className="reels-retry-btn" onClick={fetchReels}>
                 Qayta yuklash
             </button>
         </div>
@@ -412,7 +442,7 @@ const Reels = () => {
                 onWheel={handleWheel}
             >
                 {reels.length === 0 ? (
-                    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', flexDirection: 'column', gap: 12 }}>
+                    <div className="reels-empty">
                         <Music size={48} opacity={0.5} />
                         <span>No Reels yet</span>
                     </div>
@@ -434,12 +464,16 @@ const Reels = () => {
 
             {sharingPost && <ShareModal post={sharingPost} onClose={() => setSharingPost(null)} />}
 
-            <style jsx="true">{`
+            <style>{`
                 .reels-page {
                     background: #000;
                     height: 100vh;
                     overflow: hidden;
                     width: 100%;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    z-index: 1000;
                 }
                 .reels-scroll {
                     height: 100%;
@@ -474,6 +508,42 @@ const Reels = () => {
                     height: 100%;
                     object-fit: cover;
                     cursor: pointer;
+                }
+
+                .reel-error-container {
+                    width: 100%;
+                    height: 100%;
+                    background: #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #999;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .reel-error-text {
+                    margin: 0;
+                    font-size: 14px;
+                }
+                .reel-retry-btn, .reels-retry-btn {
+                    padding: 8px 20px;
+                    background: #0a66c2;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                }
+                .reel-retry-btn:hover, .reels-retry-btn:hover {
+                    background: #0a5aad;
+                }
+
+                .reel-video-loader {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 10;
                 }
 
                 .reel-overlay {
@@ -529,6 +599,9 @@ const Reels = () => {
                     border-radius: 8px;
                     font-size: 0.9rem;
                     font-weight: 600;
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
                 }
                 .reel-menu button:hover { background: rgba(255,255,255,0.1); }
 
@@ -561,6 +634,7 @@ const Reels = () => {
                     padding: 4px 14px;
                     border-radius: 6px;
                     margin-left: 4px;
+                    cursor: pointer;
                 }
                 .reel-follow.following {
                     background: rgba(255,255,255,0.2);
@@ -639,36 +713,64 @@ const Reels = () => {
                     border-radius: 999px;
                     padding: 10px 14px;
                     font-size: 0.9rem;
+                    outline: none;
+                }
+                .reel-comment-form input::placeholder {
+                    color: rgba(255,255,255,0.5);
                 }
                 .reel-comment-form button {
-                    background: var(--accent);
+                    background: #0a66c2;
                     border-radius: 999px;
                     border: none;
                     color: white;
                     padding: 0 18px;
                     font-weight: 700;
                     min-width: 72px;
+                    cursor: pointer;
                 }
-        
-        .reel-heart-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100;
-            animation: heartPop 0.8s ease-out forwards;
-            pointer-events: none;
-        }
-        @keyframes heartPop {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            15% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
-            30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
-        }
+                .reel-comment-form button:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
 
-        @media (max-width: 768px) {
-                    .reel-slide { max-width: 100%; height: calc(100vh - 60px); }
+                .reel-heart-overlay {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 100;
+                    animation: heartPop 0.8s ease-out forwards;
+                    pointer-events: none;
+                }
+                @keyframes heartPop {
+                    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                    15% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+                    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+                }
+
+                .reels-loading, .reels-error, .reels-empty {
+                    height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #000;
+                    color: white;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .spin {
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                @media (max-width: 768px) {
+                    .reel-slide { max-width: 100%; }
                     .reel-slide video { object-fit: contain; background: #000; }
                 }
             `}</style>
