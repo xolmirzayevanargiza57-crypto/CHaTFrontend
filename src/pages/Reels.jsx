@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Heart, Music, Loader, Volume2, VolumeX, MessageCircle, Send, Bookmark, MoreHorizontal, Trash2, Eye } from 'lucide-react';
+import { Heart, Music, Loader, Volume2, VolumeX, MessageCircle, Send, Bookmark, MoreHorizontal, Trash2, Eye, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ShareModal from '../components/ShareModal';
-import { translations } from '../i18n';
 import { getSocket } from '../utils/socket';
 import { formatCount } from '../utils/formatters';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://chatbackend-o1i2.onrender.com';
 
 const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare, savedPostIds, onSaveChange }) => {
     const [isFollowing, setIsFollowing] = useState(false);
@@ -24,9 +24,23 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
     const [hasCountedView, setHasCountedView] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPlaying, setIsPlaying] = useState(false);
     const watchTimer = useRef(null);
     const videoRef = useRef(null);
     const navigate = useNavigate();
+
+    // Get full video URL
+    const getVideoUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        if (url.startsWith('/api/')) {
+            return `${BACKEND_URL}${url}`;
+        }
+        if (post.fileId) {
+            return `${BACKEND_URL}/api/upload/file/${post.fileId}`;
+        }
+        return url;
+    };
 
     useEffect(() => {
         if (user && post.user) {
@@ -58,9 +72,11 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     if (entry.isIntersecting) {
                         video.currentTime = 0;
                         video.play().catch(() => {});
+                        setIsPlaying(true);
                         handleCountView();
                     } else {
                         video.pause();
+                        setIsPlaying(false);
                         clearTimeout(watchTimer.current);
                     }
                 });
@@ -90,7 +106,8 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
             setRetryCount(prev => prev + 1);
             setTimeout(() => {
                 if (videoRef.current) {
-                    videoRef.current.src = post.fileUrl + '?retry=' + Date.now();
+                    const videoUrl = getVideoUrl(post.fileUrl);
+                    videoRef.current.src = videoUrl + '?retry=' + Date.now();
                     videoRef.current.load();
                     videoRef.current.play().catch(() => {});
                 }
@@ -102,7 +119,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
     };
 
     const handleDoubleTap = () => {
-        if (!post.likes.includes(user.id)) onLike(post._id);
+        if (!post.likes?.includes(user.id)) onLike(post._id);
         setShowHeart(true);
         setTimeout(() => setShowHeart(false), 800);
     };
@@ -142,7 +159,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
         <div className="reel-slide">
             {videoError ? (
                 <div className="reel-error-container">
-                    <Eye size={48} />
+                    <Eye size={48} color="#666" />
                     <p className="reel-error-text">Video failed to load</p>
                     <button 
                         className="reel-retry-btn"
@@ -151,7 +168,8 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                             setRetryCount(0);
                             setIsLoading(true);
                             if (videoRef.current) {
-                                videoRef.current.src = post.fileUrl + '?t=' + Date.now();
+                                const videoUrl = getVideoUrl(post.fileUrl);
+                                videoRef.current.src = videoUrl + '?t=' + Date.now();
                                 videoRef.current.load();
                             }
                         }}
@@ -168,7 +186,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     )}
                     <video
                         ref={videoRef}
-                        src={post.fileUrl}
+                        src={getVideoUrl(post.fileUrl)}
                         loop
                         muted={isMuted}
                         playsInline
@@ -197,8 +215,8 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                     <div className="reel-action" onClick={() => onLike(post._id)}>
                         <Heart
                             size={28}
-                            fill={post.likes?.includes(user.id) ? "#ed4956" : "none"}
-                            color={post.likes?.includes(user.id) ? "#ed4956" : "white"}
+                            fill={post.likes?.includes(user?.id) ? "#ed4956" : "none"}
+                            color={post.likes?.includes(user?.id) ? "#ed4956" : "white"}
                         />
                         <span>{formatCount(post.likes?.length || 0)}</span>
                     </div>
@@ -210,7 +228,12 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                         <Send size={28} color="white" />
                     </div>
                     <div className="reel-action" onClick={handleSaveToggle}>
-                        <Bookmark size={28} color={isSaved ? "#ffd700" : "white"} fill={isSaved ? "#ffd700" : "none"} />
+                        <Bookmark 
+                            size={28} 
+                            color={isSaved ? "#ffd700" : "white"} 
+                            fill={isSaved ? "#ffd700" : "none"} 
+                        />
+                        <span style={{ fontSize: '10px' }}>{isSaved ? 'Saved' : ''}</span>
                     </div>
                     <div className="reel-action" onClick={onToggleMute}>
                         {isMuted ? <VolumeX size={24} color="white" /> : <Volume2 size={24} color="white" />}
@@ -223,8 +246,8 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                         <div className="reel-action" onClick={() => setShowMenu(!showMenu)}>
                             <MoreHorizontal size={24} color="white" />
                             {showMenu && (
-                                <div className="reel-menu">
-                                    <button onClick={(e) => { e.stopPropagation(); onDelete(post._id); setShowMenu(false); }}>
+                                <div className="reel-menu" onClick={(e) => e.stopPropagation()}>
+                                    <button onClick={() => { onDelete(post._id); setShowMenu(false); }}>
                                         <Trash2 size={16} /> Delete
                                     </button>
                                 </div>
@@ -236,7 +259,10 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                 <div className="reel-bottom-info">
                     <div className="reel-user" onClick={() => navigate(`/profile/${post.user?._id}`)}>
                         <img
-                            src={post.user?.avatar && post.user.avatar.startsWith('http') ? post.user.avatar : `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user?.username || 'user'}`}
+                            src={post.user?.avatar && post.user.avatar.startsWith('http') 
+                                ? post.user.avatar 
+                                : `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user?.username || 'user'}`
+                            }
                             alt=""
                             onError={(e) => {
                                 e.currentTarget.onerror = null;
@@ -259,7 +285,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                             </button>
                         )}
                     </div>
-                    <p className="reel-caption">{post.caption}</p>
+                    {post.caption && <p className="reel-caption">{post.caption}</p>}
                     <div className="reel-audio">
                         <Music size={12} />
                         <span>{post.user?.username || 'User'} · Original Audio</span>
@@ -270,6 +296,12 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
                             <div className="reel-comments-header">
                                 <strong>Comments</strong>
                                 <span>{formatCount(comments.length)}</span>
+                                <button 
+                                    onClick={() => setShowComments(false)}
+                                    style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                                >
+                                    <X size={18} />
+                                </button>
                             </div>
                             <div className="reel-comments-list">
                                 {comments.length === 0 ? (
@@ -304,7 +336,7 @@ const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare
 };
 
 const Reels = () => {
-    const { user, lang } = useAuth();
+    const { user } = useAuth();
     const [reels, setReels] = useState([]);
     const [savedPostIds, setSavedPostIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -331,6 +363,7 @@ const Reels = () => {
             setError(null);
             setLoading(true);
             const res = await axios.get(`${API_URL}/posts/reels`, { timeout: 30000 });
+            console.log('Reels data:', res.data);
             setReels(res.data || []);
         } catch (err) {
             console.error('Reels fetch error:', err);
@@ -364,13 +397,21 @@ const Reels = () => {
     };
 
     const handleLike = async (postId) => {
+        if (!user) return;
         try {
             const res = await axios.post(`${API_URL}/posts/${postId}/like`);
-            setReels(reels.map(p => p._id === postId
-                ? { ...p, likes: res.data.hasLiked ? [...p.likes, user.id] : p.likes.filter(id => id !== user.id) }
-                : p
-            ));
-        } catch (err) { console.error(err); }
+            setReels(reels.map(p => {
+                if (p._id === postId) {
+                    const likes = res.data.hasLiked 
+                        ? [...(p.likes || []), user.id] 
+                        : (p.likes || []).filter(id => id !== user.id);
+                    return { ...p, likes };
+                }
+                return p;
+            }));
+        } catch (err) { 
+            console.error('Like error:', err);
+        }
     };
 
     const handleDelete = async (postId) => {
@@ -382,8 +423,7 @@ const Reels = () => {
             if (err.response?.status === 404) {
                 setReels(reels.filter(p => p._id !== postId));
             } else {
-                const msg = err.response?.data?.message || err.message;
-                alert("Xatolik: " + msg); 
+                alert("Xatolik: " + (err.response?.data?.message || err.message)); 
             }
         }
     };
@@ -426,8 +466,8 @@ const Reels = () => {
 
     if (error) return (
         <div className="reels-error">
-            <Music size={48} opacity={0.5} />
-            <p>{error}</p>
+            <Music size={48} opacity={0.5} color="white" />
+            <p style={{ color: 'white' }}>{error}</p>
             <button className="reels-retry-btn" onClick={fetchReels}>
                 Qayta yuklash
             </button>
@@ -443,8 +483,8 @@ const Reels = () => {
             >
                 {reels.length === 0 ? (
                     <div className="reels-empty">
-                        <Music size={48} opacity={0.5} />
-                        <span>No Reels yet</span>
+                        <Music size={48} opacity={0.5} color="white" />
+                        <span style={{ color: 'white' }}>No Reels yet</span>
                     </div>
                 ) : reels.map(reel => (
                     <ReelItem
@@ -524,6 +564,7 @@ const Reels = () => {
                 .reel-error-text {
                     margin: 0;
                     font-size: 14px;
+                    color: #999;
                 }
                 .reel-retry-btn, .reels-retry-btn {
                     padding: 8px 20px;
@@ -616,6 +657,7 @@ const Reels = () => {
                     gap: 10px;
                     margin-bottom: 8px;
                     cursor: pointer;
+                    flex-wrap: wrap;
                 }
                 .reel-user img {
                     width: 36px;
@@ -681,6 +723,17 @@ const Reels = () => {
                     flex-direction: column;
                     gap: 10px;
                     margin-bottom: 10px;
+                }
+                .reel-comments-list::-webkit-scrollbar {
+                    width: 3px;
+                }
+                .reel-comments-list::-webkit-scrollbar-track {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 10px;
+                }
+                .reel-comments-list::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,0.3);
+                    border-radius: 10px;
                 }
                 .reel-comment-item {
                     color: white;
@@ -772,6 +825,12 @@ const Reels = () => {
                 @media (max-width: 768px) {
                     .reel-slide { max-width: 100%; }
                     .reel-slide video { object-fit: contain; background: #000; }
+                }
+
+                @media (min-width: 769px) {
+                    .reel-slide {
+                        max-width: 430px;
+                    }
                 }
             `}</style>
         </div>
