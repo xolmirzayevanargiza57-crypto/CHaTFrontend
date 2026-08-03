@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f2f2f7;
+  --bg-sidebar: #fafafa;
+  --text-primary: #000000;
+  --text-secondary: #8e8e93;
+  --accent: #0095f6;
+  --accent-hover: #1877f2;
+  --border: #dbdbdb;
+  --message-out: #0095f6;
+  --message-in: #efefef;
+  --message-out-text: #ffffff;
+  --message-in-text: #000000;
+  --shadow: 0 4px 12px rgba(0,0,0,0.05);
+  --sidebar-width: 245px;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-secondary: #121212;
+  --bg-sidebar: #000000;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a8a8a8;
+  --accent: #0095f6;
+  --accent-hover: #1da1f7;
+  --border: #262626;
+  --message-out: #0095f6;
+  --message-in: #262626;
+  --message-out-text: #ffffff;
+  --message-in-text: #ffffff;
+  --shadow: 0 4px 12px rgba(0,0,0,0.3);
+  --bg-sidebar: #000000;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#root {
+  display: block;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* ===== INSTAGRAM DESKTOP LAYOUT ===== */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* Fixed sidebar */
+.desktop-sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 20px;
+  background: var(--bg-sidebar);
+  z-index: 1100;
+  transition: width 0.3s ease;
+}
+
+/* Content area offset by sidebar */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-primary);
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+
+/* Narrow sidebar on medium screens (tablets) */
+@media (min-width: 769px) and (max-width: 1263px) {
+  :root { --sidebar-width: 72px; }
+  .desktop-sidebar { width: 72px; padding: 8px 8px 20px; }
+  .bottom-nav { display: none !important; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 12px));
+    width: 100vw;
+  }
+  .desktop-sidebar {
+    display: none;
+  }
+  /* Fix video format on mobile */
+  video {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 80vh !important;
+    object-fit: contain !important;
+    background: #000;
+  }
+}
+
+/* Hide bottom nav on desktop and tablet */
+@media (min-width: 769px) {
+  .bottom-nav { display: none !important; }
+}
+
+/* Utilities */
+.fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.tg-profile-page, .settings-page {
+  overflow-y: auto !important;
+  max-height: 100vh;
+}
+
+.loading-screen, .error-screen {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}

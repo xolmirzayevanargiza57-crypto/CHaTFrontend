@@ -1,0 +1,679 @@
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import { Heart, Music, Loader, Volume2, VolumeX, MessageCircle, Send, Bookmark, MoreHorizontal, Trash2, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import ShareModal from '../components/ShareModal';
+import { translations } from '../i18n';
+import { getSocket } from '../utils/socket';
+import { formatCount } from '../utils/formatters';
+
+
+
+const ReelItem = ({ post, user, onLike, onDelete, isMuted, onToggleMute, onShare, savedPostIds, onSaveChange }) => {
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+    const [showHeart, setShowHeart] = useState(false);
+    const [videoError, setVideoError] = useState(false);
+    const [comments, setComments] = useState(post.comments || []);
+    const [commentText, setCommentText] = useState('');
+    const [showComments, setShowComments] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [commentLoading, setCommentLoading] = useState(false);
+    const [isSaved, setIsSaved] = useState(savedPostIds.includes(post._id));
+    const [hasCountedView, setHasCountedView] = useState(false);
+    const watchTimer = useRef(null);
+    const videoRef = useRef(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user && post.user) {
+            setIsFollowing(post.user.followers?.some(id => id.toString() === user.id) || false);
+        }
+    }, [user, post.user]);
+
+    useEffect(() => {
+        setIsSaved(savedPostIds.includes(post._id));
+    }, [savedPostIds, post._id]);
+
+    useEffect(() => {
+        if (!videoRef.current) return;
+
+        const video = videoRef.current;
+
+        const handleCountView = () => {
+            if (hasCountedView) return;
+            watchTimer.current = setTimeout(() => {
+                axios.post(`/api/posts/${post._id}/view`).catch(err => {
+                    console.error('Failed to track view:', err);
+                });
+                setHasCountedView(true);
+            }, 2000);
+        };
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        video.currentTime = 0;
+                        video.play().catch(() => {});
+                        handleCountView();
+                    } else {
+                        video.pause();
+                        clearTimeout(watchTimer.current);
+                    }
+                });
+            },
+            { threshold: 0.6 }
+        );
+        observer.observe(video);
+        return () => {
+            observer.disconnect();
+            clearTimeout(watchTimer.current);
+        };
+    }, [post._id, hasCountedView]);
+
+    // Sync muted state
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.muted = isMuted;
+        }
+    }, [isMuted]);
+
+    const handleDoubleTap = () => {
+        if (!post.likes.includes(user.id)) onLike(post._id);
+        setShowHeart(true);
+        setTimeout(() => setShowHeart(false), 800);
+    };
+
+    const handleVideoError = (e) => {
+        console.error('Video error:', e);
+        setVideoError(true);
+    };
+
+    const handleSaveToggle = async () => {
+        setIsSaving(true);
+        try {
+            const res = await axios.post(`/api/users/save/${post._id}`);
+            setIsSaved(res.data.isSaved);
+            if (onSaveChange) onSaveChange(post._id, res.data.isSaved);
+        } catch (err) {
+            console.error('Save toggle failed:', err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCommentSubmit = async () => {
+        const trimmed = commentText.trim();
+        if (!trimmed) return;
+        setCommentLoading(true);
+        try {
+            const res = await axios.post(`/api/posts/${post._id}/comment`, { text: trimmed });
+            setComments(res.data);
+            setCommentText('');
+            setShowComments(true);
+        } catch (err) {
+            console.error('Comment failed:', err);
+        } finally {
+            setCommentLoading(false);
+        }
+    };
+
+    const isOwn = post.user._id.toString() === user.id;
+
+    return (
+        <div className="reel-slide">
+            {videoError ? (
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    background: '#000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#999',
+                    flexDirection: 'column',
+                    gap: '12px'
+                }}>
+                    <Eye size={48} />
+                    <p style={{ margin: 0, fontSize: '14px' }}>Video failed to load</p>
+                </div>
+            ) : (
+                <video
+                    ref={videoRef}
+                    src={post.fileUrl}
+                    loop
+                    muted={isMuted}
+                    playsInline
+                    preload="metadata"
+                    onClick={onToggleMute}
+                    onDoubleClick={handleDoubleTap}
+                    onError={handleVideoError}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+            )}
+            {showHeart && (
+                <div className="reel-heart-overlay">
+                    <Heart size={80} fill="white" color="white" />
+                </div>
+            )}
+
+            <div className="reel-overlay">
+                {/* Right actions */}
+                <div className="reel-sidebar-actions">
+                    <div className="reel-action" onClick={() => onLike(post._id)}>
+                        <Heart
+                            size={28}
+                            fill={post.likes.includes(user.id) ? "#ed4956" : "none"}
+                            color={post.likes.includes(user.id) ? "#ed4956" : "white"}
+                        />
+                        <span>{formatCount(post.likes.length)}</span>
+                    </div>
+                    <div className="reel-action" onClick={() => setShowComments(prev => !prev)}>
+                        <MessageCircle size={28} color="white" />
+                        <span>{formatCount(comments.length)}</span>
+                    </div>
+                    <div className="reel-action" onClick={() => onShare(post)}>
+                        <Send size={28} color="white" />
+                    </div>
+                    <div className="reel-action" onClick={handleSaveToggle}>
+                        <Bookmark size={28} color={isSaved ? "#ffd700" : "white"} fill={isSaved ? "#ffd700" : "none"} />
+                        <span>{isSaved ? 'Saved' : 'Save'}</span>
+                    </div>
+                    <div className="reel-action" onClick={onToggleMute}>
+                        {isMuted ? <VolumeX size={24} color="white" /> : <Volume2 size={24} color="white" />}
+                    </div>
+                    <div className="reel-action">
+                        <Eye size={28} color="white" />
+                        <span>{formatCount(post.views || 0)}</span>
+                    </div>
+                    {isOwn && (
+                        <div className="reel-action" onClick={() => setShowMenu(!showMenu)}>
+                            <MoreHorizontal size={24} color="white" />
+                            {showMenu && (
+                                <div className="reel-menu">
+                                    <button onClick={(e) => { e.stopPropagation(); onDelete(post._id); setShowMenu(false); }}>
+                                        <Trash2 size={16} /> Delete
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottom info */}
+                <div className="reel-bottom-info">
+                    <div className="reel-user" onClick={() => navigate(`/profile/${post.user._id}`)}>
+                        <img
+                            src={post.user.avatar && post.user.avatar.startsWith('http') ? post.user.avatar : `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user.username}`}
+                            alt=""
+                            onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${post.user.username}`;
+                            }}
+                        />
+                        <span className="reel-username">@{post.user.username}</span>
+                        {!isOwn && (
+                            <button
+                                className={`reel-follow ${isFollowing ? 'following' : ''}`}
+                                onClick={async (e) => { 
+                                    e.stopPropagation(); 
+                                    try {
+                                        const res = await axios.post(`/api/users/${post.user._id}/follow`);
+                                        setIsFollowing(res.data.isFollowing);
+                                    } catch (err) { console.error(err); }
+                                }}
+                            >
+                                {isFollowing ? 'Following' : 'Follow'}
+                            </button>
+                        )}
+                    </div>
+                    <p className="reel-caption">{post.caption}</p>
+                    <div className="reel-audio">
+                        <Music size={12} />
+                        <span>{post.user.username} · Original Audio</span>
+                    </div>
+
+                    {showComments && (
+                        <div className="reel-comments-panel">
+                            <div className="reel-comments-header">
+                                <strong>Comments</strong>
+                                <span>{formatCount(comments.length)}</span>
+                            </div>
+                            <div className="reel-comments-list">
+                                {comments.length === 0 ? (
+                                    <p className="reel-comments-empty">No comments yet. Be first!</p>
+                                ) : comments.map((comment, idx) => (
+                                    <div key={idx} className="reel-comment-item">
+                                        <div className="reel-comment-user">
+                                            <strong>{comment.user?.username || 'User'}</strong>
+                                            <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <p>{comment.text}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="reel-comment-form">
+                                <input
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    placeholder="Add a comment..."
+                                />
+                                <button onClick={handleCommentSubmit} disabled={commentLoading || !commentText.trim()}>
+                                    {commentLoading ? '...' : 'Send'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Reels = () => {
+    const { user, lang } = useAuth();
+    const [reels, setReels] = useState([]);
+    const [savedPostIds, setSavedPostIds] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [globalMuted, setGlobalMuted] = useState(false);
+    const [sharingPost, setSharingPost] = useState(null);
+    const containerRef = useRef(null);
+    const isScrolling = useRef(false);
+
+    useEffect(() => { 
+        fetchReels(); 
+        if (user) {
+            fetchSavedIds();
+            const socket = getSocket(user.id);
+            socket.on('postDeleted', (postId) => {
+                setReels(prev => prev.filter(p => p._id !== postId));
+            });
+            return () => socket.off('postDeleted');
+        }
+    }, [user?.id]);
+
+
+    const fetchReels = async () => {
+        try {
+            setError(null);
+            setLoading(true);
+            const res = await axios.get('/api/posts/reels', { timeout: 10000 });
+            setReels(res.data || []);
+        } catch (err) {
+            console.error('Reels fetch error:', err);
+            setError(err.response?.data?.message || 'Failed to load reels');
+            setReels([]);
+        } finally { 
+            setLoading(false); 
+        }
+    };
+
+    const handleWheel = (e) => {
+        if (isScrolling.current) return;
+        
+        const container = containerRef.current;
+        if (!container) return;
+
+        if (Math.abs(e.deltaY) < 30) return;
+
+        e.preventDefault();
+        isScrolling.current = true;
+
+        const delta = e.deltaY;
+        const slideHeight = window.innerHeight;
+        const currentScroll = container.scrollTop;
+        
+        let targetScroll;
+        if (delta > 0) {
+            targetScroll = Math.ceil((currentScroll + 1) / slideHeight) * slideHeight;
+        } else {
+            targetScroll = Math.floor((currentScroll - 1) / slideHeight) * slideHeight;
+        }
+
+        container.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+        });
+
+        setTimeout(() => {
+            isScrolling.current = false;
+        }, 800);
+    };
+
+    const fetchSavedIds = async () => {
+        try {
+            const res = await axios.get('/api/users/saved-posts');
+            setSavedPostIds(res.data.map(post => post._id));
+        } catch (err) {
+            console.error('Failed to fetch saved reels:', err);
+        }
+    };
+
+    const handleSaveChange = (postId, isSaved) => {
+        setSavedPostIds(prev => {
+            if (isSaved) {
+                return [...new Set([...prev, postId])];
+            }
+            return prev.filter(id => id !== postId);
+        });
+    };
+
+    const handleLike = async (postId) => {
+        try {
+            const res = await axios.post(`/api/posts/${postId}/like`);
+            setReels(reels.map(p => p._id === postId
+                ? { ...p, likes: res.data.hasLiked ? [...p.likes, user.id] : p.likes.filter(id => id !== user.id) }
+                : p
+            ));
+        } catch (err) { console.error(err); }
+    };
+
+    const handleDelete = async (postId) => {
+        if (!window.confirm("Reelni o'chirishni istaysizmi?")) return;
+        try {
+            await axios.delete(`/api/posts/${postId}`);
+            setReels(reels.filter(p => p._id !== postId));
+        } catch (err) { 
+            if (err.response?.status === 404) {
+                setReels(reels.filter(p => p._id !== postId));
+            } else {
+                const msg = err.response?.data?.message || err.message;
+                alert("Xatolik: " + msg); 
+            }
+        }
+
+
+    };
+
+    if (loading) return (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: 'white' }}>
+            <Loader className="spin" size={48} />
+        </div>
+    );
+
+    if (error) return (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: 'white', flexDirection: 'column', gap: '12px' }}>
+            <Music size={48} opacity={0.5} />
+            <p>{error}</p>
+            <button onClick={fetchReels} style={{ marginTop: '12px', padding: '8px 16px', background: '#0a66c2', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                Qayta yuklash
+            </button>
+        </div>
+    );
+
+    return (
+        <div className="reels-page">
+            <div 
+                className="reels-scroll" 
+                ref={containerRef}
+                onWheel={handleWheel}
+            >
+                {reels.length === 0 ? (
+                    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', flexDirection: 'column', gap: 12 }}>
+                        <Music size={48} opacity={0.5} />
+                        <span>No Reels yet</span>
+                    </div>
+                ) : reels.map(reel => (
+                    <ReelItem
+                        key={reel._id}
+                        post={reel}
+                        user={user}
+                        savedPostIds={savedPostIds}
+                        onSaveChange={handleSaveChange}
+                        onLike={handleLike}
+                        onDelete={handleDelete}
+                        isMuted={globalMuted}
+                        onToggleMute={() => setGlobalMuted(!globalMuted)}
+                        onShare={setSharingPost}
+                    />
+                ))}
+            </div>
+
+            {sharingPost && <ShareModal post={sharingPost} onClose={() => setSharingPost(null)} />}
+
+            <style jsx="true">{`
+                .reels-page {
+                    background: #000;
+                    height: 100vh;
+                    overflow: hidden;
+                    width: 100%;
+                }
+                .reels-scroll {
+                    height: 100%;
+                    overflow-y: scroll;
+                    scroll-snap-type: y mandatory;
+                    scroll-snap-stop: always;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                    overscroll-behavior: contain;
+                    overscroll-behavior-y: contain;
+                    -webkit-overflow-scrolling: touch;
+                    touch-action: pan-y;
+                }
+                .reels-scroll::-webkit-scrollbar { display: none; }
+
+                .reel-slide {
+                    height: 100vh;
+                    width: 100%;
+                    max-width: 430px;
+                    margin: 0 auto;
+                    scroll-snap-align: start;
+                    scroll-snap-stop: always;
+                    position: relative;
+                    background: #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                }
+                .reel-slide video {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    cursor: pointer;
+                }
+
+                .reel-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-end;
+                    padding: 20px 16px;
+                    pointer-events: none;
+                }
+                .reel-overlay * { pointer-events: auto; }
+
+                .reel-sidebar-actions {
+                    position: absolute;
+                    right: 12px;
+                    bottom: 80px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 18px;
+                    pointer-events: auto;
+                }
+                .reel-action {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    color: white;
+                    cursor: pointer;
+                    gap: 4px;
+                    position: relative;
+                }
+                .reel-action span { font-size: 0.75rem; font-weight: 600; }
+
+                .reel-menu {
+                    position: absolute;
+                    right: 36px;
+                    bottom: 0;
+                    background: rgba(30,30,30,0.95);
+                    border-radius: 12px;
+                    padding: 8px;
+                    min-width: 120px;
+                    z-index: 100;
+                }
+                .reel-menu button {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #ff4444;
+                    padding: 8px 12px;
+                    width: 100%;
+                    border-radius: 8px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+                .reel-menu button:hover { background: rgba(255,255,255,0.1); }
+
+                .reel-bottom-info {
+                    color: white;
+                    max-width: calc(100% - 60px);
+                    padding-bottom: 16px;
+                }
+                .reel-user {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 8px;
+                    cursor: pointer;
+                }
+                .reel-user img {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    object-fit: cover;
+                }
+                .reel-username { font-weight: 700; font-size: 0.95rem; }
+                .reel-follow {
+                    font-size: 0.82rem;
+                    font-weight: 600;
+                    background: transparent;
+                    border: 1.5px solid white !important;
+                    color: white;
+                    padding: 4px 14px;
+                    border-radius: 6px;
+                    margin-left: 4px;
+                }
+                .reel-follow.following {
+                    background: rgba(255,255,255,0.2);
+                    border-color: transparent !important;
+                }
+                .reel-caption {
+                    font-size: 0.9rem;
+                    margin-bottom: 8px;
+                    line-height: 1.4;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                .reel-audio {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 0.8rem;
+                    opacity: 0.85;
+                }
+
+                .reel-comments-panel {
+                    margin-top: 12px;
+                    background: rgba(0,0,0,0.35);
+                    border-radius: 14px;
+                    padding: 12px;
+                    max-height: 220px;
+                    overflow: hidden;
+                    backdrop-filter: blur(6px);
+                }
+                .reel-comments-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                }
+                .reel-comments-list {
+                    max-height: 130px;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    margin-bottom: 10px;
+                }
+                .reel-comment-item {
+                    color: white;
+                    font-size: 0.85rem;
+                    line-height: 1.4;
+                }
+                .reel-comment-user {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 12px;
+                    align-items: center;
+                    margin-bottom: 4px;
+                    opacity: 0.9;
+                    font-size: 0.8rem;
+                }
+                .reel-comment-user strong { font-weight: 700; }
+                .reel-comments-empty {
+                    color: rgba(255,255,255,0.78);
+                    font-size: 0.84rem;
+                }
+                .reel-comment-form {
+                    display: flex;
+                    gap: 8px;
+                }
+                .reel-comment-form input {
+                    flex: 1;
+                    background: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.18);
+                    color: white;
+                    border-radius: 999px;
+                    padding: 10px 14px;
+                    font-size: 0.9rem;
+                }
+                .reel-comment-form button {
+                    background: var(--accent);
+                    border-radius: 999px;
+                    border: none;
+                    color: white;
+                    padding: 0 18px;
+                    font-weight: 700;
+                    min-width: 72px;
+                }
+        
+        .reel-heart-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            animation: heartPop 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes heartPop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+            30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+                    .reel-slide { max-width: 100%; height: calc(100vh - 60px); }
+                    .reel-slide video { object-fit: contain; background: #000; }
+                }
+            `}</style>
+        </div>
+    );
+};
+
+export default Reels;
